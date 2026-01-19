@@ -1,6 +1,6 @@
 # Cisco-Packet-Tracer
 
-
+## OSPF configuration
 ✅ 1단계. 물리 연결 & 기본 확인
 
 라우터 전원 ON
