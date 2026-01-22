@@ -238,5 +238,30 @@ R1(config-if)#
 *Mar  1 01:55:16.495: %DUAL-5-NBRCHANGE: IP-EIGRP(0) 1000: Neighbor 192.168.21.1 (FastEthernet0/1) is resync: summary configured
 R1(config-if)#
 
+R3(config-router)#
+*Mar  1 00:34:39.103: %DUAL-5-NBRCHANGE: IP-EIGRP(0) 1000: Neighbor 192.168.31.2 (FastEthernet1/0) is up: new adjacency
+R3(config-router)#sh ip route
+                  ^
+% Invalid input detected at '^' marker.
+
+R3(config-router)#do sh ip route
+Codes: C - connected, S - static, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2
+       i - IS-IS, su - IS-IS summary, L1 - IS-IS level-1, L2 - IS-IS level-2
+       ia - IS-IS inter area, * - candidate default, U - per-user static route
+       o - ODR, P - periodic downloaded static route
+
+Gateway of last resort is not set
+
+D    192.168.14.0/24 [90/284160] via 192.168.31.2, 01:19:05, FastEthernet1/0
+C    192.168.31.0/24 is directly connected, FastEthernet1/0
+     172.16.0.0/23 is subnetted, 1 subnets
+D       172.16.4.0 [90/286720] via 192.168.31.2, 01:04:21, FastEthernet1/0
+D    192.168.21.0/24 [90/284160] via 192.168.31.2, 01:19:07, FastEthernet1/0
+D    192.168.0.0/24 [90/309760] via 192.168.31.2, 01:16:25, FastEthernet1/0
+C    192.168.1.0/24 is directly connected, FastEthernet0/0
+R3(config-router)#
 
 
