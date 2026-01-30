@@ -290,3 +290,271 @@ Router LSA 2개
 1.1.1.2
 
 정상 👍
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Virtual-LiNK
+0️⃣ 전제 (그림 기준 정리)
+Router	Interface	IP	Area
+R1	s0/0	192.168.10.1/24	area 0
+R2	s0/0	192.168.10.2/24	area 0
+R2	s0/1	192.168.20.1/24	area 1
+R3	s0/1	192.168.20.2/24	area 1
+R3	s0/2	192.168.30.1/24	area 1
+R4	s0/2	192.168.30.2/24	area 1
+R4	s0/3	192.168.40.1/24	area 2
+R5	s0/3	192.168.40.2/24	area 2
+
+Router ID:
+
+R1: 1.1.1.1
+
+R2: 2.2.2.2
+
+R3: 3.3.3.3
+
+R4: 4.4.4.4
+
+R5: 5.5.5.5
+
+1️⃣ IP 주소 설정 (전부 no shut 필수)
+🔹 R1
+conf t
+int s0/0
+ ip address 192.168.10.1 255.255.255.0
+ no shutdown
+
+🔹 R2
+conf t
+int s0/0
+ ip address 192.168.10.2 255.255.255.0
+ no shutdown
+
+int s0/1
+ ip address 192.168.20.1 255.255.255.0
+ no shutdown
+
+🔹 R3
+conf t
+int s0/1
+ ip address 192.168.20.2 255.255.255.0
+ no shutdown
+
+int s0/2
+ ip address 192.168.30.1 255.255.255.0
+ no shutdown
+
+🔹 R4
+conf t
+int s0/2
+ ip address 192.168.30.2 255.255.255.0
+ no shutdown
+
+int s0/3
+ ip address 192.168.40.1 255.255.255.0
+ no shutdown
+
+🔹 R5
+conf t
+int s0/3
+ ip address 192.168.40.2 255.255.255.0
+ no shutdown
+
+2️⃣ OSPF 기본 설정 (Router ID 고정)
+
+⚠️ Router ID 설정 후 OSPF 재시작 필요
+
+R1
+router ospf 1
+ router-id 1.1.1.1
+ network 192.168.10.0 0.0.0.255 area 0
+
+R2
+router ospf 1
+ router-id 2.2.2.2
+ network 192.168.10.0 0.0.0.255 area 0
+ network 192.168.20.0 0.0.0.255 area 1
+
+R3
+router ospf 1
+ router-id 3.3.3.3
+ network 192.168.20.0 0.0.0.255 area 1
+ network 192.168.30.0 0.0.0.255 area 1
+
+R4
+router ospf 1
+ router-id 4.4.4.4
+ network 192.168.30.0 0.0.0.255 area 1
+ network 192.168.40.0 0.0.0.255 area 2
+
+R5
+router ospf 1
+ router-id 5.5.5.5
+ network 192.168.40.0 0.0.0.255 area 2
+
+
+👉 여기까지 하면
+❌ Area 2 ↔ Area 0 안 됨 (정상)
+
+3️⃣ Virtual Link 설정 (핵심)
+
+📌 Transit Area = area 1
+📌 R2 ↔ R4
+
+R2
+router ospf 1
+ area 1 virtual-link 4.4.4.4
+
+R4
+router ospf 1
+ area 1 virtual-link 2.2.2.2
+
+
+확인:
+
+show ip ospf virtual-links
+
+
+→ State: FULL
+
+4️⃣ OSPF Authentication 설정 (Area 1 기준)
+
+👉 Virtual Link는 Transit Area의 인증을 그대로 따라감
+그래서 Area 1에 인증 걸면 Virtual Link에도 적용됨
+
+🔐 방식: MD5 인증 (시험·실무 국룰)
+🔹 Area 1 전체에 인증 활성화
+
+(R2, R3, R4 전부)
+
+router ospf 1
+ area 1 authentication message-digest
+
+🔹 인터페이스별 Key 설정
+R2
+int s0/1
+ ip ospf message-digest-key 1 md5 CISCO
+
+R3
+int s0/1
+ ip ospf message-digest-key 1 md5 CISCO
+int s0/2
+ ip ospf message-digest-key 1 md5 CISCO
+
+R4
+int s0/2
+ ip ospf message-digest-key 1 md5 CISCO
+
+
+⚠️ Key 번호 / 암호 반드시 동일
+
+5️⃣ 최종 확인 체크리스트 ✅
+show ip ospf neighbor
+show ip ospf virtual-links
+show ip route ospf
+
+
+정상 결과:
+
+Neighbor: FULL
+
+Virtual Link: UP
+
+R5에서 Area 0 경로 보임
+
+🔥 시험용 한 줄 정리
+
+Virtual Link 인증은
+Transit Area(Authentication)을 그대로 상속한다
+
+Virtual-link에 “직접” authentication 거는 법 정리해줄게.
+(Area 인증이랑 헷갈리는 데서 시험 문제 많이 나와 😈)
+
+🔑 핵심 먼저
+
+❌ area X authentication → Virtual-link 전용 아님
+
+✅ Virtual-link는 따로 인증 설정 가능
+
+설정 위치: router ospf 모드
+
+양쪽 ABR에 동일하게 설정 필수
+
+🎯 이 토폴로지 기준
+
+Virtual-link: R2 ↔ R4
+
+Transit Area: Area 1
+
+Router ID
+
+R2 → 2.2.2.2
+
+R4 → 4.4.4.4
+
+⚙️ Virtual-Link 전용 Authentication 설정
+🔐 MD5 인증 (추천 / 시험 국룰)
+▶ R2
+router ospf 1
+ area 1 virtual-link 4.4.4.4 authentication message-digest
+ area 1 virtual-link 4.4.4.4 message-digest-key 1 md5 CISCO
+
+▶ R4
+router ospf 1
+ area 1 virtual-link 2.2.2.2 authentication message-digest
+ area 1 virtual-link 2.2.2.2 message-digest-key 1 md5 CISCO
+
+
+📌 포인트
+
+authentication message-digest → 인증 방식
+
+message-digest-key → 키 지정
+
+키 번호 / 암호 / 방식 전부 동일해야 함
+
+🔍 확인 명령어
+show ip ospf virtual-links
+
+
+정상이면:
+
+Authentication: Message Digest
+State: FULL
+
+⚠️ 시험·실무 함정 정리
+❌ 이렇게 하면 안 됨
+
+한쪽만 설정
+
+RID 잘못 입력
+
+Key 번호 다름
+
+Area 인증만 걸고 Virtual-link 인증 안 건 경우
+
+✅ 이렇게 이해하면 100점
+
+Virtual-link는
+Area 인증을 상속받을 수도 있고,
+자기만의 인증을 가질 수도 있다
+
+🧠 Area 인증 vs Virtual-Link 인증 차이
+구분	적용 범위
+Area Authentication	Area 전체 (모든 인터페이스 + VL)
+Virtual-Link Authentication	해당 Virtual-link만
+🔥 한 줄 요약
+
+Virtual-link 인증은
+router ospf 모드에서
+area X virtual-link RID authentication
