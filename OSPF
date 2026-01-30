@@ -580,3 +580,28 @@ Virtual-Link Authentication	해당 Virtual-link만
 Virtual-link 인증은
 router ospf 모드에서
 area X virtual-link RID authentication
+
+
+
+
+
+● OSPF Stub Area & Totally Stub Area 정의
+
+ 
+
+LSDB에 저장되는 경로정보를 축소 및 프로세싱 자원을 절약하기 위해 상세한 외부경로 정보대신 Default Gateway 정보를 받아 라우팅 테이블에 내리는 기술이 적용되는 Area를 의미 합니다.
+
+ 
+
+● OSPF Stub Area & Totally Stub Area 장점 및 특징
+
+ 
+
+장점	- LSDB 크기 및 라우팅 테이블이 감소하여 자원 저장과 계산에 사용되는 리소스를 절약할 수 있습니다.
+- 30분 마다 수행하는 LSA Flooding 작업의 부하가 감소 합니다.
+특징	Stub Area	- ASBR이 수행한 재분배를 통해 학습된 외부경로를 수용하지 않는 Area 입니다. 
+- 상세한 외부 정보 대신 Default Route (0.0.0.0/0)을 사용하여 외부와 통신 합니다. 
+- Stub Area로 설정되면 ASBR이 존재할 수 없습니다. (ABR = ASBR인 경우 제외)
+Totally Stub Area	- Cisco 전용 Area Type 입니다. (최근에는 대부분의 Vendor가 지원 합니다.)
+- Stub Area의 특징을 가지고 있으며 LSA Type 3  정보도 받지 않는 Area 입니다.
+- LSA Type 3 ~5 정보를 받지 않는 대신 Default Route를 사용하여 통신을 수행합니다.
