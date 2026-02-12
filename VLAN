@@ -1,0 +1,114 @@
+1️⃣ VLAN 초기화
+Delete filename [vlan.dat]?
+Delete flash:/vlan.dat? [confirm]
+Switch# reload
+
+
+👉 이거 = 스위치에 저장된 VLAN 정보 초기화
+vlan.dat 삭제 + 재부팅 →
+기존에 만들었던 VLAN 다 날아가고 VLAN 1만 남음
+
+그래서:
+
+“전에 하던 거 있는데 그게 안 보이네”
+👉 정상임. VLAN 정보 초기화해서 사라진 거임.
+
+2️⃣ 재부팅 후 VLAN 상태 확인
+Switch# sh vlan
+
+
+결과:
+
+VLAN 1만 존재
+
+모든 포트가 VLAN 1에 들어가 있음
+
+1002~1005는 Cisco 기본 VLAN (삭제 불가)
+
+3️⃣ 스위치 이름 바꿈
+conf t
+hostname SW1
+
+4️⃣ VLAN 생성
+vlan 10
+ name 192.168.10.0/24-Network
+
+vlan 20
+ name 192.168.20.0/240Network
+
+
+👉 VLAN 10, VLAN 20 생성 완료
+※ 이름 오타 있음:
+
+192.168.20.0/240Network  ❌
+192.168.20.0/24-Network  ⭕
+
+5️⃣ 포트에 VLAN 할당
+int range f0/1 , f0/3
+ switchport mode access
+ switchport access vlan 10
+
+
+👉 Fa0/1, Fa0/3 → VLAN 10
+
+int range f0/2, f0/4
+ switchport mode access
+ switchport access vlan 20
+
+
+👉 Fa0/2, Fa0/4 → VLAN 20
+
+6️⃣ 최종 결과
+sh vlan
+
+
+결과:
+
+VLAN	포트
+10	Fa0/1, Fa0/3
+20	Fa0/2, Fa0/4
+1	나머지 전부
+📌 시험/과제용 “VLAN 설정 명령어 한 방 정리”
+
+이거 그대로 외우면 됨 👇
+en
+conf t
+
+hostname SW1
+
+vlan 10
+ name VLAN10
+exit
+
+vlan 20
+ name VLAN20
+exit
+
+int range f0/1, f0/3
+ switchport mode access
+ switchport access vlan 10
+exit
+
+int range f0/2, f0/4
+ switchport mode access
+ switchport access vlan 20
+exit
+
+end
+show vlan
+
+💡 실습할 때 꿀팁
+
+✔ 저장 안 하면 전원 끄면 다 날아감:
+
+copy run start
+
+
+✔ 특정 포트 VLAN 확인:
+
+show run interface f0/1
+
+
+✔ 포트 상태 보기:
+
+show interfaces status
