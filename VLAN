@@ -113,9 +113,6 @@ Trunk 포트는 VLAN 여러 개 전달
 
 
 
-
-
-
 1️⃣ VLAN 초기화
 Delete filename [vlan.dat]?
 Delete flash:/vlan.dat? [confirm]
@@ -230,3 +227,167 @@ show run interface f0/1
 ✔ 포트 상태 보기:
 
 show interfaces status
+
+
+
+
+
+f0/1번엔 태그 없음. vlan 10번으로 붙여서 도착하면 뗌
+
+
+🔁 전체 흐름 한 줄 요약
+
+VLAN 생성 → 트렁크 구성 → Native VLAN 삽질 → 스패닝트리 에러 → 라우터 서브인터페이스 구성 → VLAN 간 통신 성공
+
+1️⃣ 트렁크 & VLAN allowed 조작 (SW1)
+✔ 한 일
+int f0/10
+ switchport trunk allowed vlan remove 20
+ switchport trunk allowed vlan add 20
+
+✔ 결과
+show interfaces trunk
+
+
+VLAN 20 제거 → 다시 추가됨
+
+트렁크 정상
+
+👉 이 부분 정상 작업 + 이해 잘함
+
+2️⃣ Native VLAN mismatch 에러 (SW1 ↔ SW2)
+❌ 에러 로그
+%CDP-4-NATIVE_VLAN_MISMATCH
+%SPANTREE-2-BLOCK_PVID_LOCAL
+
+❌ 원인
+
+SW1: Native VLAN = 10
+
+SW2: Native VLAN = 1
+👉 서로 달라서 STP가 포트 차단함
+
+✅ 해결
+
+양쪽 동일하게 맞춤 (VLAN 1로 복구한 거 잘함)
+
+int f0/10
+ switchport trunk native vlan 1
+
+
+👉 트렁크 양쪽 Native VLAN은 반드시 동일
+
+3️⃣ 스위치에 IP 못 넣는 이유
+❌ 시도
+int f0/20
+ ip address 192.168.10.1 255.255.255.0
+
+❌ 에러 이유
+
+👉 L2 스위치(2950)는 물리 포트에 IP 못 넣음
+
+✅ 맞는 방법 (SVI)
+int vlan 10
+ ip address 192.168.10.254 255.255.255.0
+ no shutdown
+
+
+👉 관리용 IP는 VLAN 인터페이스(SVI) 에만 설정 가능
+
+4️⃣ 라우터 서브인터페이스 (Router-on-a-Stick)
+❌ 처음 에러
+ip address ...
+% Configuring IP routing ... only allowed if encapsulation set
+
+❌ 원인
+
+👉 encapsulation 먼저 안 함
+
+✅ 정석 순서
+int f0/0.1
+ encapsulation dot1Q 10
+ ip address 192.168.10.1 255.255.255.0
+
+int f0/0.2
+ encapsulation dot1Q 20
+ ip address 192.168.20.1 255.255.255.0
+
+
+👉 이거 순서 진짜 시험에도 나옴
+
+5️⃣ VLAN 간 통신 성공
+✔ 라우터 라우팅 테이블
+show ip route
+
+C 192.168.10.0/24 → Fa0/0.1
+C 192.168.20.0/24 → Fa0/0.2
+
+✔ PC에서 핑 성공
+
+VLAN 10 ↔ VLAN 10 OK
+
+VLAN 10 → VLAN 20 OK
+
+중간에 ARP 때문에 첫 핑 타임아웃 → 정상 현상
+
+👉 구성 전부 맞음 👍
+
+🧠 지금 네 토폴로지 구조
+PC (VLAN10) ┐
+            ├─ SW1 ──(trunk)── SW2
+PC (VLAN20) ┘          │
+                       │ trunk
+                       R1
+                    (Router-on-a-Stick)
+
+✅ 시험/실습용 명령어 치트키 (이거만 외워도 됨)
+🔹 VLAN 생성
+conf t
+vlan 10
+ name VLAN10
+vlan 20
+ name VLAN20
+end
+
+🔹 Access 포트
+int f0/1
+ switchport mode access
+ switchport access vlan 10
+
+🔹 Trunk 포트
+int f0/10
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20
+ switchport trunk native vlan 1
+
+🔹 Trunk 확인
+show interfaces trunk
+
+🔹 스위치 관리 IP (SVI)
+int vlan 10
+ ip address 192.168.10.254 255.255.255.0
+ no shutdown
+
+🔹 Router-on-a-Stick
+int f0/0
+ no shutdown
+
+int f0/0.1
+ encapsulation dot1Q 10
+ ip address 192.168.10.1 255.255.255.0
+
+int f0/0.2
+ encapsulation dot1Q 20
+ ip address 192.168.20.1 255.255.255.0
+
+🔹 저장
+copy run start
+
+⚠️ 네가 겪은 에러 = 실습자 90%가 겪는 실수
+에러	원인
+Native VLAN mismatch	트렁크 양쪽 Native VLAN 다름
+Spanning-tree block	VLAN ID 불일치
+IP address invalid	L2 스위치 포트에 IP 넣음
+encapsulation 에러	dot1Q 먼저 안 함
+
+👉 오히려 제대로 다 밟고 온 거라 실력 쌓임 😆
