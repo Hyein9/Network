@@ -391,3 +391,96 @@ IP address invalid	L2 스위치 포트에 IP 넣음
 encapsulation 에러	dot1Q 먼저 안 함
 
 👉 오히려 제대로 다 밟고 온 거라 실력 쌓임 😆
+
+
+
+
+🧠 멀티레이어 스위치 핵심 개념
+
+L2 스위치: VLAN 나누기만 가능 (라우팅 ❌)
+
+멀티레이어 스위치(L3):
+👉 VLAN 나누기 + VLAN 간 라우팅 ⭕
+
+Router-on-a-Stick 필요 없음
+
+성능 훨씬 좋음 (하드웨어 라우팅)
+
+🧱 토폴로지 예시
+PC1 (VLAN10) ─┐
+               ├─ MLS (3560 같은 L3 스위치)
+PC2 (VLAN20) ─┘
+
+
+게이트웨이:
+
+VLAN10 → 192.168.10.1
+
+VLAN20 → 192.168.20.1
+(이 IP를 멀티레이어 스위치가 직접 가짐)
+
+✅ 멀티레이어 스위치 기본 세팅 (치트키)
+
+⚠️ 3560 / 3650 / 3750 같은 L3 스위치 써야 함
+2950, 2960 ❌ (L2 전용)
+
+1️⃣ VLAN 생성
+conf t
+vlan 10
+ name VLAN10
+vlan 20
+ name VLAN20
+
+2️⃣ SVI에 IP 할당 (게이트웨이 역할)
+int vlan 10
+ ip address 192.168.10.1 255.255.255.0
+ no shutdown
+
+int vlan 20
+ ip address 192.168.20.1 255.255.255.0
+ no shutdown
+
+3️⃣ ⭐ IP 라우팅 켜기 (이게 핵심)
+ip routing
+👉 이거 안 하면 L3 스위치가 라우팅 안 함 (제일 많이 까먹는 포인트)
+
+4️⃣ PC 연결 포트 설정 (Access)
+int f0/1
+ switchport mode access
+ switchport access vlan 10
+
+int f0/2
+ switchport mode access
+ switchport access vlan 20
+
+5️⃣ 확인
+show ip route
+
+정상이면:
+C 192.168.10.0/24 is directly connected, Vlan10
+C 192.168.20.0/24 is directly connected, Vlan20
+
+show vlan
+
+🖥 PC IP 설정
+PC	IP	Gateway
+PC1	192.168.10.10	192.168.10.1
+PC2	192.168.20.10	192.168.20.1
+🎯 테스트
+PC1 > ping 192.168.20.10
+
+
+👉 바로 통신 됨 (라우터 없이 성공 🔥)
+
+⚠️ 멀티레이어 스위치에서 자주 터지는 실수
+증상	원인
+VLAN 간 통신 안 됨	ip routing 안 켬
+SVI down	해당 VLAN에 포트 없음 or no shutdown 안 함
+핑 안 됨	PC 게이트웨이 설정 안 함
+IP 안 먹힘	L2 스위치로 실습함
+🧠 Router-on-a-Stick vs L3 Switch 차이
+구분	Router-on-a-Stick	멀티레이어 스위치
+성능	느림 (단일 링크)	빠름 (하드웨어 라우팅)
+구성	복잡	깔끔
+장비	라우터 필요	스위치 하나로 끝
+실무	소규모	중대형 네트워크
