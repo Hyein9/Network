@@ -1,3 +1,121 @@
+🌐 VLAN 개념 (한 줄 요약)
+VLAN = 한 대의 스위치를 ‘논리적으로 여러 대처럼’ 나누는 기술
+👉 물리적으로는 스위치 1대인데
+👉 논리적으로는 여러 개의 네트워크로 쪼개는 거임
+
+🧠 왜 VLAN을 쓰냐?
+❌ VLAN 없을 때
+
+스위치에 꽂힌 모든 PC가 다 같은 네트워크
+
+브로드캐스트 다 받음 → 느려짐
+
+보안 구림 (부서 구분 안 됨)
+
+⭕ VLAN 있을 때
+
+같은 스위치라도 서로 다른 VLAN이면 완전 다른 네트워크
+
+브로드캐스트 분리됨
+
+보안 좋아짐
+
+네트워크 구조 깔끔해짐
+
+🏢 현실 비유로 이해해보자
+
+스위치 = 건물
+포트 = 방
+VLAN = 부서
+
+포트	VLAN
+Fa0/1	영업부 (VLAN 10)
+Fa0/2	개발부 (VLAN 20)
+Fa0/3	영업부 (VLAN 10)
+Fa0/4	개발부 (VLAN 20)
+
+👉 같은 건물에 있어도
+👉 부서 다르면 서로 말 안 통함
+
+🧱 VLAN 핵심 개념 4개만 기억해라
+1️⃣ VLAN은 브로드캐스트 도메인 분리
+
+VLAN 10에서 ARP 날리면
+👉 VLAN 20은 못 받음
+
+2️⃣ VLAN끼리는 원래 통신 안 됨
+
+👉 VLAN 10 ↔ VLAN 20
+❌ 직접 통신 불가
+
+✔ 통신하려면?
+➡ 라우터 또는 L3 스위치 필요 (Inter-VLAN Routing)
+
+3️⃣ Access 포트 vs Trunk 포트
+✅ Access 포트
+
+PC 같은 일반 장비 연결
+
+VLAN 하나만 소속
+
+switchport mode access
+switchport access vlan 10
+
+✅ Trunk 포트
+
+스위치 ↔ 스위치
+
+스위치 ↔ 라우터
+
+여러 VLAN 태그 붙여서 전달
+
+switchport mode trunk
+
+4️⃣ VLAN은 번호 + 이름
+vlan 10
+ name Sales
+
+
+번호 = VLAN ID
+
+이름 = 그냥 보기 좋게 붙이는 거
+
+🧪 너가 한 실습 = VLAN 구조 예시
+PC1 -- Fa0/1 -- VLAN 10 (192.168.10.0/24)
+PC2 -- Fa0/2 -- VLAN 20 (192.168.20.0/24)
+PC3 -- Fa0/3 -- VLAN 10
+PC4 -- Fa0/4 -- VLAN 20
+
+
+👉 PC1 ↔ PC3 통신 가능
+👉 PC2 ↔ PC4 통신 가능
+👉 PC1 ↔ PC2 ❌ (라우터 없으면 안 됨)
+
+🧠 시험에 자주 나오는 핵심 문장
+
+VLAN은 논리적 네트워크 분리 기술
+
+VLAN은 브로드캐스트 도메인을 분리
+
+서로 다른 VLAN 간 통신은 라우터 필요
+
+Access 포트는 VLAN 1개
+
+Trunk 포트는 VLAN 여러 개 전달
+
+⚠️ 실습할 때 자주 터지는 실수
+
+❌ VLAN 만들고 포트 할당 안 함
+❌ Access/Trunk 헷갈림
+❌ VLAN 간 통신 되길 기대함 (라우터 없는데)
+
+
+
+
+
+
+
+
 1️⃣ VLAN 초기화
 Delete filename [vlan.dat]?
 Delete flash:/vlan.dat? [confirm]
