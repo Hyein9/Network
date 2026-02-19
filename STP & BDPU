@@ -357,6 +357,19 @@ RSTP 쓰는 환경이면 Alternate Port = 장애 대응 속도 핵심
 STP만 쓰면 장애 나면 30초~50초 멈춤 → 체감 개빡셈
 그래서 요즘은 거의 다 RSTP or PVST+ 씀
 
+2️⃣ RSTP 포트 역할 (Roles)
+
+RSTP는 포트 “역할”을 명확히 정의함:
+Root Port (RP)
+→ 루트 브리지로 가는 최단 경로
+Designated Port (DP)
+→ 해당 세그먼트의 대표 포트 (Forwarding)
+Alternate Port (AP)
+→ RP의 백업 경로 (평소 Discarding)
+Backup Port (BP)
+→ 같은 스위치 내 이중 연결 시 생기는 예비 포트 (드문 케이스)
+
+👉 핵심: Alternate/Backup 포트가 이미 준비 중이라 장애 시 바로 승격 가능
 
 1️⃣ STP vs RSTP 핵심 차이
 구분	      STP (802.1D)	    RSTP (802.1w)
