@@ -1,0 +1,14 @@
+Port-Security란?
+물리적포트에 연결되는 Mac주소를 제한하여 비인가된 장치의 네트워크 접근을 차단하는 기능
+
+protect는 허가되지않은 포트는 막을뿐 restrict 카운트를 관리하고 침해사고가 발생한 로그를 남겨서 로그 서버에 전달하는 방어조치.
+스위치 보안을 중요시하는 회사는 restrict
+
+1. 기본설정(sticky방식)
+Switch(config)# int f0/1
+Switch(config-if)# switchport mode access
+Switch(config-if)# switchport port-security
+Switch(config-if)# switchport port-security maximum 1
+Switch(config-if)# switchport port-security violation shutdown
+Switch(config-if)# switchport port-security mac-address sticky
+
