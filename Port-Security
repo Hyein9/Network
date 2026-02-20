@@ -60,12 +60,17 @@ Switch(config-if)#switchport port-security violation [protect | restrict | shutd
 (1) Violation protect
 위반한 장비 통신을 차단하고 허용된 호스트는 통신가능
 ;Port-security 조건을 위반한 MAC 주소를 가진 장비의 모든 Frame Drop + Log 기록 X + 보안 위반한 장비만 통신 불가 (shutdown X)
+SW1(config)#interface ethernet 0/0
+SW1(config-if)#switchport port-security
+SW1(config-if)#switchport port-security maximum 2
+SW1(config-if)#switchport port-security violation
+SW1(config-if)#switchport port-security violation protect
 
 (2)Violation shutdown
-Port-Security가 동작하는 포트에서 위반했을 경우 포트 자체를 닫아버린다.(가장 강경대응방법)
-해당 포트는 Shutdown이 되며 err-disabled 상태로 넘어간다.
-이렇게 인터페이스의 에러가 생긴 경우에는 원인을 확인하고 다시 복구시켜주어야 한다.
-Port-Security Default Violation 이다.
+Port-Security가 동작하는 포트에서 위반했을 경우 포트 자체를 닫아버림.(가장 강경대응방법)
+해당 포트는 Shutdown이 되며 err-disabled 상태로 넘어감.
+이렇게 인터페이스의 에러가 생긴 경우에는 원인을 확인하고 다시 복구시켜야함.
+Port-Security Default Violation
 
 SW1(config)#interface ethernet 0/0
 SW1(config-if)#switchport port-security
@@ -85,13 +90,4 @@ SW1(config-if)#switchport port-security violation restrict
 최대 2개까지 가능하게 했을때 0050.7966.6806의 MAC주소가 제한 되었다는 Log 입니다.
 *Mar 26 15:15:47.206: %PORT_SECURITY-2-PSECURE_VIOLATION: Security violation occurred, caused by MAC address 0050.7966.6806 on port Ethernet0/0.
 
-- Violation protect
-Port-Security가 동작하는 포트에서 위반한 MAC주소를 가진 장비의 모든 Frame을 Drop시킨다.
 
-restrict와 동일하게 동작하지만, protect는 Log를 발생시키지 않는다.
-
-SW1(config)#interface ethernet 0/0
-SW1(config-if)#switchport port-security
-SW1(config-if)#switchport port-security maximum 2
-SW1(config-if)#switchport port-security violation
-SW1(config-if)#switchport port-security violation protect
