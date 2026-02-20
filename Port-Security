@@ -12,3 +12,53 @@ Switch(config-if)# switchport port-security maximum 1
 Switch(config-if)# switchport port-security violation shutdown
 Switch(config-if)# switchport port-security mac-address sticky
 
+port-security 설정
+port-security를 설정할 인터페이스의 동작 모드를 설정한다. (여기서는 access 모드로 설정한다.)
+ 
+SW(config)# int f0/23
+SW(config-if)# switchport mode access
+해당 인터페이스에 port-security를 활성화한다.
+SW(config-if)# switchport port-security
+접속가능한 IP 주소의 최대 개수를 지정한다.
+SW(config-if)# switchport port-security maximum [number]
+port-security 보안 규정을 위반한 경우, 동작할 모드를 설정한다.
+SW(config-if)# switchport port-security violation [protect|restrict|shutdown]
+출처: https://b1jou39.tistory.com/54 [돌끼랑:티스토리]
+
+
+
+#Port-Security Violation Mode 3가지
+
+- Violation shutdown
+Port-Security가 동작하는 포트에서 위반했을 경우 해당 포트는 Shutdown이 되며 err-disabled 상태로 넘어간다.
+Port-Security Default Violation 이다.
+
+SW1(config)#interface ethernet 0/0
+SW1(config-if)#switchport port-security
+SW1(config-if)#switchport port-security mac-address 0050.7966.6804
+SW1(config-if)#switchport port-security violation shutdown
+
+- Violation restrict
+Port-Security가 동작하는 포트에서 위반한 MAC주소를 가진 장비의 모든 Frame을 Drop시킨다.
+
+Drop과 동시에 위반한 MAC주소에 대해서 Log가 발생한다.
+
+SW1(config)#interface ethernet 0/0
+SW1(config-if)#switchport port-security
+SW1(config-if)#switchport port-security maximum 2
+SW1(config-if)#switchport port-security violation restrict
+ 
+
+최대 2개까지 가능하게 했을때 0050.7966.6806의 MAC주소가 제한 되었다는 Log 입니다.
+*Mar 26 15:15:47.206: %PORT_SECURITY-2-PSECURE_VIOLATION: Security violation occurred, caused by MAC address 0050.7966.6806 on port Ethernet0/0.
+
+- Violation protect
+Port-Security가 동작하는 포트에서 위반한 MAC주소를 가진 장비의 모든 Frame을 Drop시킨다.
+
+restrict와 동일하게 동작하지만, protect는 Log를 발생시키지 않는다.
+
+SW1(config)#interface ethernet 0/0
+SW1(config-if)#switchport port-security
+SW1(config-if)#switchport port-security maximum 2
+SW1(config-if)#switchport port-security violation
+SW1(config-if)#switchport port-security violation protect
