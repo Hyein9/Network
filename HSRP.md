@@ -1,4 +1,4 @@
-
+# FHRP(First Hop Redundancy Protoocols)
 ## 1. HSRP(Hot Standby Router Protocol)  <CISCO Protocol>
   (1) 이중게이트웨이 사이에서 IP와 MAC Address를 공유 -> 무정지 경로 이중화를 제공.
   (2) Physical Port 동기화, VLAN Interface 동기화(L3 Switch)
@@ -22,27 +22,54 @@ Standby hello time 3 seconds Standby holdtime 10 seconds
 ```
 
 ● HSRP 상태
-  (1) Initial State
-  (2) Learn State (State Code = 1)
-  액티브 라우터에서 헬로 메시지를 아직 수신하지 못함, 자신의 가상 IP Address를 알지 못함
-  (3) Listen State (Staet Code = 2)
-  (4) Speak State (State Code = 4)
-  (5) Standby State (State Code = 8)
-  (6) Active State
+  **(1) Initial State**
+   -  HSRP 그룹의 Active 라우터 IP를 학습하는 상태.
+   - 아직 Active나 Standby가 아님.
+      - 라우터는 다른 라우터로부터 Hello 패킷을 받고 가상 IP 주소를 학습함
   
+  **(2) Learn State (State Code = 1)**
+    - 액티브 라우터에서 헬로 메시지를 아직 수신하지 못함, 자신의 가상 IP Address를 알지 못함
+  
+  **(3) Listen State (Staet Code = 2)**
+    - 그룹의 Active와 Standby 라우터가 이미 존재함을 알고 있음.
+    = 패킷 수신만 가능하며 가상 IP를 사용하지 않음.
+    - Active/Standby 선출 과정에 참여하지 않음.
+  
+  **(4) Speak State (State Code = 4)**
+    - Hello 패킷을 주기적으로 송신하여 그룹 멤버에게 자신의 존재를 알림.
+    - 그룹 내 다른 라우터와 Active/Standby 선출 과정에 참여함.
+  
+  **(5) Standby State (State Code = 8)**
+   **- Active 라우터가 장애 발생 시 즉시 역할을 인계받을 준비 상태**
+   = 현재는 가상 IP를 사용하지 않고 대기 중.
+   = Active와 Standby 라우터 간 Hello 패킷을 주고받으며 상태 유지
+  
+  **(6) Active State (State Code = 16)**
+  **- 가상 IP를 소유하고 패킷 포워딩을 수행하는 라우터.**
+  = 그룹 내 최우선 라우터이며, 장애 발생 시 Standby가 대체.
+  - 주기적으로 Hello 패킷 송신하여 다른 라우터에게 자신의 Active 상태 알림
+
 ● HSRP 설정시 고려사항
-  (1) VLAN을 통한 HSRP인지 Physical Port를 통한 hsrp인지 구분
-  (2) virtual route rG/W
-  (3) VLAN G/W
+  (1) VLAN을 통한 HSRP인지 Physical Port를 통한 hsrp인지 구분 -> ``` interface vlan 10 / interface Gi0/0 ```
+  
+  (2) virtual route rG/W  -> ``` standby 10 ip 192.168.10.1 ```
+  
+  (3) VLAN G/W 
+  
   (4) 우선순위 Priority 우선순위가 같은 경우 일반적으로 IP가 높은 쪽이 Active
+  
   (5) Hello Dead주기 timer(Sec)
+  
   (6) hsrp group number
+  
   (7) track
+  
   (8) preempt
+  
   (9) authentication
 
 
-## FHRP(First Hop Redundancy Protoocols) 실
+
 ### 🛠️ R1 설정 (중앙 라우터)
 ```
 conf t
