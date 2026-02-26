@@ -6,13 +6,13 @@
   
   (3) 다수의 물리적인 router를 가상의 논리적인 router로 동기화
 
-● HSRP의 구성
+### ** ● HSRP의 구성 **
   - Active Router : 가상 IP Address로 오는 트래픽을 전송
   - Standby Router : Active Router 장애 발생에 대비한 백업 라우터
   - virtual Router : 실제 라우터가 아닌 HSRP 그룹 개념 가상라우터로 패킷이 전송되면 실제로 패킷을 전달하는 것은 액티브 라우터.
   - Member Router : Active, Standby 둘다 아니지만 액티브와 스탠바이를 모니터링.
     
-● HSRP 특징
+### ** ● HSRP 특징 **
   - UDP 1985번 포트 / Multicast 224.0.0.2를 사용한다.
   - HSRP는 Layer-3 이상에서 동작을 수행한다.
   - Hello Message를 이용하여 우선순위를 결정 : Priority Value = Default 100 그룹별로 설정 가능
@@ -23,7 +23,7 @@
 Standby hello time 3 seconds Standby holdtime 10 seconds
 ```
 
-● HSRP 상태
+### ** ● HSRP 상태 **
 
   **(1) Initial State**
    -  HSRP 그룹의 Active 라우터 IP를 학습하는 상태.
@@ -52,18 +52,24 @@ Standby hello time 3 seconds Standby holdtime 10 seconds
   = 그룹 내 최우선 라우터이며, 장애 발생 시 Standby가 대체.
   - 주기적으로 Hello 패킷 송신하여 다른 라우터에게 자신의 Active 상태 알림
 
-● HSRP 설정시 고려사항
-  (1) VLAN을 통한 HSRP인지 Physical Port를 통한 hsrp인지 구분 -> ``` interface vlan 10 / interface Gi0/0 ```
+## ● HSRP 설정시 고려사항
+  (1) VLAN을 통한 HSRP인지 Physical Port를 통한 hsrp인지 구분
+      -> ``` interface vlan 10 / interface Gi0/0 ```
   
-  (2) virtual route rG/W  -> ``` standby 10 ip 192.168.10.1 ```
+  (2) virtual route rG/W 
+      -> ``` standby 10 ip 192.168.10.1 ```
   
-  (3) VLAN G/W -> ``` ip address 192.168.10.2 ```
+  (3) VLAN G/W 
+      -> ``` ip address 192.168.10.2 ```
   
-  (4) 우선순위 Priority 우선순위가 같은 경우 일반적으로 IP가 높은 쪽이 Active -> ``` standby 10 priority 110 ```
+  (4) 우선순위 Priority 우선순위가 같은 경우 일반적으로 IP가 높은 쪽이 Active
+      -> ``` standby 10 priority 110 ```
   
-  (5) Hello Dead주기 timer(Sec) -> ``` standby 10 timers 3 10 ```
+  (5) Hello Dead주기 timer(Sec)
+      -> ``` standby 10 timers 3 10 ```
   
-  (6) hsrp group number -> ``` standby 10 ... ```
+  (6) hsrp group number
+      -> ``` standby 10 ... ```
   
   (7) track -> ``` standby 10 track Gi0/1 20 ```
   
