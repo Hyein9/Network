@@ -75,7 +75,7 @@ DUAL-5-NBRCHANGE: Neighbor 192.168.2.65 is up
 → 다 맞아야 이웃 유지됨
 
 ✅ R21
-````
+```
 conf t
 key chain R21-KEY
  key 21
