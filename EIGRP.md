@@ -1,5 +1,5 @@
 ## 실습
-1️⃣ R21, R22 라우터 기동
+#### 1️⃣ R21, R22 라우터 기동
 
 Dynamips VM에서 3725 라우터 부팅
 
@@ -20,9 +20,11 @@ int f0/1
  no shutdown
 ```
 확인:
-
-do show ip int brief
+```
+(do) show ip int brief
+```
 ✅ R22
+```
 conf t
 int f0/0
  ip address 192.168.2.66 255.255.255.192
@@ -31,12 +33,14 @@ int f0/0
 int f0/1
  ip address 192.168.2.130 255.255.255.192
  no shutdown
-
+```
 확인:
-
+```
 do show ip int brief
-3️⃣ EIGRP 102 설정 (자동요약 끄기 + 네트워크 광고)
+```
+#### 3️⃣ EIGRP 102 설정 (자동요약 끄기 + 네트워크 광고)
 ✅ R21
+```
 router eigrp 102
  no auto-summary
  network 192.168.2.0 0.0.0.63
@@ -45,7 +49,9 @@ router eigrp 102
 이웃 형성 확인:
 
 do show ip route
+```
 ✅ R22
+```
 router eigrp 102
  no auto-summary
  network 192.168.2.64 0.0.0.63
@@ -54,7 +60,8 @@ router eigrp 102
 이웃 형성 로그:
 
 DUAL-5-NBRCHANGE: Neighbor 192.168.2.65 is up
-4️⃣ EIGRP 인증 (Key-Chain) 설정 🔐
+```
+#### 4️⃣ EIGRP 인증 (Key-Chain) 설정 🔐
 
 포인트:
 
@@ -68,6 +75,7 @@ DUAL-5-NBRCHANGE: Neighbor 192.168.2.65 is up
 → 다 맞아야 이웃 유지됨
 
 ✅ R21
+````
 conf t
 key chain R21-KEY
  key 21
@@ -83,12 +91,12 @@ key chain R21-KEY
 
 int f0/0
  ip authentication key-chain eigrp 102 R21-KEY
-
+```
 👉 적용 순간:
-
+```
 Neighbor down: keychain changed
 Neighbor up: new adjacency
-
+```
 → 정상 동작
 
 5️⃣ 연결 테스트 (PING)
