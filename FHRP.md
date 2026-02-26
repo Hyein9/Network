@@ -277,13 +277,13 @@ Vlan10 - Group 10
 ```
 ### ⚠️ 실무 꿀팁
 
-** ✔ Priority 같으면 IP 높은 쪽이 Active **
+✔ Priority 같으면 IP 높은 쪽이 Active
 
-** ✔ preempt 없으면 Active 죽었다 살아나도 Standby로 남음 **
+✔ preempt 없으면 Active 죽었다 살아나도 Standby로 남음
 
-** ✔ Track 안 걸면 업링크 죽어도 Active 유지됨 (망함 😇) **
+✔ Track 안 걸면 업링크 죽어도 Active 유지됨 (망함 😇)
 
-** ✔ HSRP 인증 키 다르면 Active/Standby 절대 안 됨 **
+✔ HSRP 인증 키 다르면 Active/Standby 절대 안 됨
 
 # 2. VRRP(Virtual Router Redundancy Protocol) <Standard Protocol>
 
