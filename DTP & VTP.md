@@ -4,7 +4,7 @@ switchport mode dynamic auto  switchport mode dynamic auto  Access
 switchport mode dynamic auto  switchport mode dynamic auto
 
 
-DTP-Auto
+###DTP-Auto
 소극적 협상으로, 상대편이 trunk 또는 Desirable 이 아닐경우 Access 로 설정된다.
 L2 스위치에서 기본값이며, Access 친화적이다.
 설정하는 방법은 아래와 같다
@@ -12,7 +12,7 @@ L2 스위치에서 기본값이며, Access 친화적이다.
 Switch(config-if)# switchport mode dynamic auto
 
 
-DTP-Desirable
+###DTP-Desirable
 적극적 협상으로, 상대편이 Access 가 아니라면 Trunk 로 설정된다.
 L3 스위치에서 기본값이며, Trunk 친화적이다.
 설정하는 방법은 아래와 같다.
