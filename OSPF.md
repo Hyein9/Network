@@ -27,36 +27,27 @@
     -> router ospf [process-id]
     -> redistribute connected subnets
 출처: https://nirsa.tistory.com/32 [The Nirsa Way:티스토리]
-
-🌐 IP 주소 다시 한 번 (기억용 반복)
+```
+#### 🌐 IP 주소
+```
 🔹 R1
-
 G0/0 → 192.168.10.1 /24
-
 G0/1 → 10.0.12.1 /30
 
 🔹 R2
-
 G0/0 → 10.0.12.2 /30
-
 G0/1 → 10.0.23.1 /30
 
 🔹 R3
-
 G0/0 → 10.0.23.2 /30
-
 G0/1 → 192.168.30.1 /24
 
 🔹 PC
-
 PC1: 192.168.10.10 /24 GW 192.168.10.1
-
 PC2: 192.168.10.11 /24 GW 192.168.10.1
-
 PC3: 192.168.30.10 /24 GW 192.168.30.1
-
 PC4: 192.168.30.11 /24 GW 192.168.30.1
-
+```
 
 ✅ 1단계. 물리 연결 & 기본 확인
 
@@ -67,11 +58,12 @@ PC4: 192.168.30.11 /24 GW 192.168.30.1
 PC ↔ Router는 Copper Straight-Through
 
 시리얼 인터페이스 존재 확인
-
+```
 show ip interface brief
-
+```
 ✅ 2단계. 인터페이스 IP 설정 (라우터별)
 🔹 R1
+```
 conf t
 interface se0/0
 ip address 1.1.1.1 255.0.0.0
@@ -81,8 +73,9 @@ no shutdown
 interface fa0/0
 ip address 192.168.10.2 255.255.255.0
 no shutdown
-
+```
 🔹 R2
+```
 conf t
 interface se0/0
 ip address 1.1.1.2 255.0.0.0
@@ -96,8 +89,9 @@ no shutdown
 interface fa0/0
 ip address 126.255.255.2 255.0.0.0
 no shutdown
-
+```
 🔹 R3
+```
 conf t
 interface se0/0
 ip address 2.1.1.2 255.0.0.0
@@ -111,8 +105,9 @@ no shutdown
 interface fa0/0
 ip address 191.255.255.2 255.0.0.0
 no shutdown
-
+```
 🔹 R4
+```
 conf t
 interface se0/0
 ip address 3.1.1.2 255.0.0.0
@@ -121,16 +116,18 @@ no shutdown
 interface fa0/0
 ip address 223.255.255.2 255.255.255.0
 no shutdown
-
+```
 ✅ 3단계. PC IP 설정
+```
 PC	IP	Gateway
 PC1	192.168.10.1	192.168.10.2
 PC2	126.255.255.1	126.255.255.2
 PC3	191.255.255.1	191.255.255.2
 PC4	223.255.255.1	223.255.255.2
-
+```
 ✅ 4단계. OSPF 설정 (가장 중요)
 🔹 R1 (Area 10)
+```
 router ospf 1
 network 1.0.0.0 0.255.255.255 area 10
 network 192.168.10.0 0.0.0.255 area 10
@@ -151,12 +148,13 @@ network 191.255.0.0 0.255.255.255 area 30
 router ospf 1
 network 3.0.0.0 0.255.255.255 area 40
 network 223.255.255.0 0.0.0.255 area 40
-
+```
 ✅ 5단계. OSPF 이웃 확인
+```
 show ip ospf neighbor ✔ 이웃 라우터가 FULL 상태여야 함
 
 show ip ospf database ✔ LSA들이 Area 간에 교환되는지 확인
-
+```
 정상 출력:
 
 FULL/ -
@@ -181,6 +179,7 @@ PC1 > ping 223.255.255.1
 
 # 토폴로지(2)
 1️⃣ 토폴로지 해석 (그림 기준)
+```
 [LAN1]                     [LAN2]
 192.168.10.0/24            192.168.20.0/24
      |                          |
@@ -189,28 +188,21 @@ PC1 > ping 223.255.255.1
      |                          |
    R1 s0/0  ---- 10.10.10.0/24 ---- R2 s0/0
  10.10.10.1               10.10.10.254
-
+```
 
 OSPF Area: Area 0
-
 Router-ID
-
 R1 → 1.1.1.1
-
 R2 → 1.1.1.2
 
 목표
-
 R1 ↔ R2 OSPF 인접(FULL)
-
 LAN 간 상호 통신 가능
-
 2️⃣ 네가 처음에 막혔던 이유 (중요 ⭐)
 ❌ 에러
 %OSPF-4-NORTRID: OSPF process 1 failed to allocate unique router-id
 
 🔍 원인
-
 OSPF는 Router-ID가 반드시 필요한데,
 OSPF 실행 시점에 아래 조건을 만족 못 함:
 
@@ -231,6 +223,7 @@ router-id도 없어서
 
 3️⃣ R1 설정 흐름 정리 (깔끔 버전)
 ✅ (1) 인터페이스 IP 먼저
+```
 R1(config)#int s0/0
 R1(config-if)#ip address 10.10.10.1 255.255.255.0
 R1(config-if)#no shutdown
@@ -238,29 +231,33 @@ R1(config-if)#no shutdown
 R1(config)#int f0/0
 R1(config-if)#ip address 192.168.10.1 255.255.255.0
 R1(config-if)#no shutdown
-
+```
 ✅ (2) OSPF 프로세스 생성
+```
 R1(config)#router ospf 1
-
+```
 
 이 시점엔 Router-ID가 자동으로
 👉 10.10.10.1로 잡힘 (확인됨)
 
 ✅ (3) Router-ID 수동 지정 (베스트 프랙티스)
+```
 R1(config-router)#router-id 1.1.1.1
-
+```
 
 확인:
-
+```
 R1#show ip ospf database
 OSPF Router with ID (1.1.1.1)
-
+```
 ✅ (4) 네트워크 광고
+```
 R1(config-router)#network 10.10.10.0 0.0.0.255 area 0
 R1(config-router)#network 192.168.10.0 0.0.0.255 area 0
-
+```
 4️⃣ R2 설정 흐름 정리
 ✅ (1) 인터페이스 IP
+```
 R2(config)#int s0/0
 R2(config-if)#ip address 10.10.10.254 255.255.255.0
 R2(config-if)#no shutdown
@@ -268,28 +265,29 @@ R2(config-if)#no shutdown
 R2(config)#int f0/0
 R2(config-if)#ip address 192.168.20.1 255.255.255.0
 R2(config-if)#no shutdown
-
+```
 ✅ (2) OSPF 실행
+```
 R2(config)#router ospf 2
-
+```
 
 초기 Router-ID → 192.168.20.1
 
 ✅ (3) 네트워크 광고
+```
 R2(config-router)#network 10.10.10.0 0.0.0.255 area 0
 R2(config-router)#network 192.168.20.0 0.0.0.255 area 0
-
+```
 ✅ (4) Router-ID 변경
+```
 R2(config-router)#router-id 1.1.1.2
-
+```
 
 ⚠️ 이미 OSPF가 돌아가고 있어서
-
 Reload or use "clear ip ospf process"
 
 
 → 그래서 한 거 👇
-
 R2#clear ip ospf process
 
 5️⃣ OSPF 인접 상태 정상 확인
@@ -312,17 +310,6 @@ Router LSA 2개
 1.1.1.2
 
 정상 👍
-
-
-
-
-
-
-
-
-
-
-
 
 
 ## Virtual-LiNK
@@ -351,12 +338,14 @@ R5: 5.5.5.5
 
 1️⃣ IP 주소 설정 (전부 no shut 필수)
 🔹 R1
+```
 conf t
 int s0/0
  ip address 192.168.10.1 255.255.255.0
  no shutdown
-
+```
 🔹 R2
+```
 conf t
 int s0/0
  ip address 192.168.10.2 255.255.255.0
@@ -365,8 +354,9 @@ int s0/0
 int s0/1
  ip address 192.168.20.1 255.255.255.0
  no shutdown
-
+```
 🔹 R3
+```
 conf t
 int s0/1
  ip address 192.168.20.2 255.255.255.0
@@ -375,8 +365,9 @@ int s0/1
 int s0/2
  ip address 192.168.30.1 255.255.255.0
  no shutdown
-
+```
 🔹 R4
+```
 conf t
 int s0/2
  ip address 192.168.30.2 255.255.255.0
@@ -385,17 +376,18 @@ int s0/2
 int s0/3
  ip address 192.168.40.1 255.255.255.0
  no shutdown
-
+```
 🔹 R5
+```
 conf t
 int s0/3
  ip address 192.168.40.2 255.255.255.0
  no shutdown
-
+```
 2️⃣ OSPF 기본 설정 (Router ID 고정)
 
 ⚠️ Router ID 설정 후 OSPF 재시작 필요
-
+```
 R1
 router ospf 1
  router-id 1.1.1.1
@@ -423,7 +415,7 @@ R5
 router ospf 1
  router-id 5.5.5.5
  network 192.168.40.0 0.0.0.255 area 2
-
+```
 
 👉 여기까지 하면
 ❌ Area 2 ↔ Area 0 안 됨 (정상)
@@ -432,7 +424,7 @@ router ospf 1
 
 📌 Transit Area = area 1
 📌 R2 ↔ R4
-
+```
 R2
 router ospf 1
  area 1 virtual-link 4.4.4.4
@@ -440,12 +432,12 @@ router ospf 1
 R4
 router ospf 1
  area 1 virtual-link 2.2.2.2
-
+```
 
 확인:
-
+```
 show ip ospf virtual-links
-
+```
 
 → State: FULL
 
@@ -458,11 +450,12 @@ show ip ospf virtual-links
 🔹 Area 1 전체에 인증 활성화
 
 (R2, R3, R4 전부)
-
+```
 router ospf 1
  area 1 authentication message-digest
-
+```
 🔹 인터페이스별 Key 설정
+```
 R2
 int s0/1
  ip ospf message-digest-key 1 md5 CISCO
@@ -476,15 +469,16 @@ int s0/2
 R4
 int s0/2
  ip ospf message-digest-key 1 md5 CISCO
-
+```
 
 ⚠️ Key 번호 / 암호 반드시 동일
 
 5️⃣ 최종 확인 체크리스트 ✅
+```
 show ip ospf neighbor
 show ip ospf virtual-links
 show ip route ospf
-
+```
 
 정상 결과:
 
@@ -527,6 +521,7 @@ R4 → 4.4.4.4
 ⚙️ Virtual-Link 전용 Authentication 설정
 🔐 MD5 인증 (추천 / 시험 국룰)
 ▶ R2
+```
 router ospf 1
  area 1 virtual-link 4.4.4.4 authentication message-digest
  area 1 virtual-link 4.4.4.4 message-digest-key 1 md5 CISCO
@@ -535,7 +530,7 @@ router ospf 1
 router ospf 1
  area 1 virtual-link 2.2.2.2 authentication message-digest
  area 1 virtual-link 2.2.2.2 message-digest-key 1 md5 CISCO
-
+```
 
 📌 포인트
 
