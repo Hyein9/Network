@@ -1,4 +1,4 @@
-# NAT(Netowrk Address Translation)
+# NAT(Network Address Translation)
 -사설 ip address를 public ip address로 변환시키는 통신망의 주소 변환기술
 - 내부망은 public ip의 가용범위를 줄이기 위해 사설 ip를 사용
 - 인터넷망(외부망)은 사실관계에 따른 ip실명을 원칙 : 국제표준에 제시된 국가별 공인 ip를 사용하도록 InterNIC에 의해 규정
@@ -12,19 +12,16 @@
 
 🧠 주소 정리 (먼저 이거 보고 가자)
 내부망
-
+```
 LAN1: 172.16.100.0/24
-
 PC-1, PC-2
 
 LAN2: 172.16.10.0/24
-
 PC-3, PC-4
-
+```
+```
 NAT Router (R2)
-
 Inside → 172.16.10.0/24
-
 Outside → 10.100.105.0/24
 
 ISP GW → 10.100.105.1
@@ -32,7 +29,7 @@ ISP GW → 10.100.105.1
 NAT Pool
 
 10.100.105.241 ~ 243
-
+```
 🖥️ R1 설정 (내부 라우터)
 ```
 enable
