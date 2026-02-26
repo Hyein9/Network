@@ -22,6 +22,7 @@ Standby hello time 3 seconds Standby holdtime 10 seconds
 ```
 
 ● HSRP 상태
+
   **(1) Initial State**
    -  HSRP 그룹의 Active 라우터 IP를 학습하는 상태.
    - 아직 Active나 Standby가 아님.
@@ -54,19 +55,19 @@ Standby hello time 3 seconds Standby holdtime 10 seconds
   
   (2) virtual route rG/W  -> ``` standby 10 ip 192.168.10.1 ```
   
-  (3) VLAN G/W 
+  (3) VLAN G/W -> ``` ip address 192.168.10.2 ```
   
-  (4) 우선순위 Priority 우선순위가 같은 경우 일반적으로 IP가 높은 쪽이 Active
+  (4) 우선순위 Priority 우선순위가 같은 경우 일반적으로 IP가 높은 쪽이 Active -> ``` standby 10 priority 110 ```
   
-  (5) Hello Dead주기 timer(Sec)
+  (5) Hello Dead주기 timer(Sec) -> ``` standby 10 timers 3 10 ```
   
-  (6) hsrp group number
+  (6) hsrp group number -> ``` standby 10 ... ```
   
-  (7) track
+  (7) track -> ``` standby 10 track Gi0/1 20 ```
   
-  (8) preempt
+  (8) preempt -> ``` standby 10 preempt ```
   
-  (9) authentication
+  (9) authentication -> ```standby 10 authentication md5 key-string HSRPKEY ```
 
 
 
@@ -177,6 +178,81 @@ R3# show standby brief
 ```
 PC1> ping <R3_LAN_IP>
 PC1> ping <R1_TO_R2_IP>
+```
+
+
+### ✅ 1️⃣ VLAN 인터페이스 기반 HSRP (SVI)
+
+환경 예시
+
+VLAN 10
+
+가상 게이트웨이: 192.168.10.1
+
+R1(Active), R2(Standby)
+```
+🔹 R1 (Active Router)
+conf t
+interface vlan 10
+ ip address 192.168.10.2 255.255.255.0
+ standby 10 ip 192.168.10.1
+ standby 10 priority 110
+ standby 10 preempt
+ standby 10 timers 3 10
+ standby 10 authentication md5 key-string HSRPKEY
+ standby 10 track GigabitEthernet0/1 20
+ no shutdown
+end
+```
+```
+🔹 R2 (Standby Router)
+conf t
+interface vlan 10
+ ip address 192.168.10.3 255.255.255.0
+ standby 10 ip 192.168.10.1
+ standby 10 priority 100
+ standby 10 preempt
+ standby 10 timers 3 10
+ standby 10 authentication md5 key-string HSRPKEY
+ standby 10 track GigabitEthernet0/1 20
+ no shutdown
+end
+```
+### ✅ 2️⃣ Physical Port 기반 HSRP (라우터 직결 환경)
+
+환경 예시
+
+인터페이스: Gi0/0
+
+가상 게이트웨이: 10.0.0.1
+
+```
+🔹 R1
+conf t
+interface GigabitEthernet0/0
+ ip address 10.0.0.2 255.255.255.0
+ standby 1 ip 10.0.0.1
+ standby 1 priority 120
+ standby 1 preempt
+ standby 1 timers 1 3
+ standby 1 track GigabitEthernet0/1 30
+ standby 1 authentication md5 key-string HSRPKEY
+ no shutdown
+end
+```
+
+🔹 R2
+```
+conf t
+interface GigabitEthernet0/0
+ ip address 10.0.0.3 255.255.255.0
+ standby 1 ip 10.0.0.1
+ standby 1 priority 100
+ standby 1 preempt
+ standby 1 timers 1 3
+ standby 1 track GigabitEthernet0/1 30
+ no shutdown
+end
 ```
 # 2. VRRP(Virtual Router Redundancy Protocol) <Standard Protocol>
 
