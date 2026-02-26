@@ -44,6 +44,7 @@ Standby hello time 3 seconds Standby holdtime 10 seconds
 
 ## FHRP(First Hop Redundancy Protoocols) 실
 ### 🛠️ R1 설정 (중앙 라우터)
+```
 conf t
  hostname R1
 
@@ -57,7 +58,9 @@ conf t
 
  ip routing
 end
+```
 ### 🛠️ R2 설정 (HSRP Standby)
+```
 conf t
  hostname R2
 
@@ -77,8 +80,10 @@ conf t
 
  ip routing
 end
+```
 
 ### R3 설정 (HSRP Active + Tracking + Preempt)
+```
 conf t
  hostname R3
 
@@ -100,18 +105,52 @@ conf t
 
  ip routing
 end
-
-### 🖥️ PC 설정 (VPCS 기준)
-PC1> ip <PC1_IP> <PC_MASK> <GW_VIP>
-PC2> ip <PC2_IP> <PC_MASK> <GW_VIP>
+```
 
 ### 🧪 검증 & 디버그 전체 흐름
 ✅ 상태 확인
+```
 show standby brief
 show ip interface brief
+```
 
 R3(config)#interface f0/0
 R3(config-if)#shutdown
+
+
+#### ✅ R2에서 기존 VIP 제거 + 새 VIP 등록
+```
+conf t
+ interface f0/0
+  no standby <HSRP_GRP> ip <OLD_VIP>
+  standby <HSRP_GRP> ip <NEW_VIP>
+end
+```
+#### ✅ R3에서 기존 VIP 제거 + 새 VIP 등록
+```
+conf t
+ interface f0/0
+  no standby <HSRP_GRP> ip <OLD_VIP>
+  standby <HSRP_GRP> ip <NEW_VIP>
+end
+```
+
+### 🖥️ PC 설정 (VPCS 기준)
+```
+PC1> ip <PC1_IP> <PC_MASK> <GW_VIP>
+PC2> ip <PC2_IP> <PC_MASK> <GW_VIP>
+```
+#### 9️⃣ 변경 후 검증
+```
+R2# show standby brief
+R3# show standby brief
+```
+✔ Virtual IP = <NEW_VIP>
+✔ Active / Standby 정상 유지
+```
+PC1> ping <R3_LAN_IP>
+PC1> ping <R1_TO_R2_IP>
+```
 # 2. VRRP(Virtual Router Redundancy Protocol) <Standard Protocol>
 
 # 3. GLBP(Gateway Load Balancing Protocol)    <CISCO Protocol>
