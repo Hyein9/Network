@@ -1,19 +1,21 @@
 # Cisco-Packet-Tracer
 
 ## OSPF configuration
-
+```
  1) 기본 설정
 > router ospf [process-id]
    - 하나의 라우터에 여러개의 OSPF를 설정할 때 구분하기 위한 값이기 때문에 다른 라우터들끼리 달라도 상관이 없음
 > router-id x.x.x.x 
    - 최적의 경로를 누가 알려줬는지 파악하기 위해 필요, 일반적으로 가장 작은 IP를 설정하기 때문에 loop back 같은곳에 IP를 넣고 설정
 > network [네트워크대역] [와일드마스크] area [area number]
- 
+```
+```
  2) 축약 설정
  - ABR 또는 ASBR에서만 축약 가능
 > router ospf [process-id]
 > area [축약하고싶은 area number] range [N/W IP] [wildcard mask]
- 
+```
+```
  3) 재분배
  - ASBR 에서 재분배 설정을 해야 함
  - 모두 통신이 되기 위해선 다른 프로토콜을 사용하는 인터페이스와 OSPF를 사용하는 인터페이스 모두 재분배를 해주어야 쌍방향 통신 가능
