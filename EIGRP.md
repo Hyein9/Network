@@ -83,7 +83,9 @@ key chain R21-KEY
 
 int f0/0
  ip authentication key-chain eigrp 102 R21-KEY
+```
 ✅ R22
+```
 conf t
 key chain R21-KEY
  key 21
