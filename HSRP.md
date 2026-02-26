@@ -1,5 +1,5 @@
-## FHRP(First Hop Redundancy Protoocols)
-# 1. HSRP(Hot Standby Router Protocol)  <CISCO Protocol>
+
+## 1. HSRP(Hot Standby Router Protocol)  <CISCO Protocol>
   (1) 이중게이트웨이 사이에서 IP와 MAC Address를 공유 -> 무정지 경로 이중화를 제공.
   (2) Physical Port 동기화, VLAN Interface 동기화(L3 Switch)
   (3) 다수의 물리적인 router를 가상의 논리적인 router로 동기화
@@ -19,6 +19,20 @@
 ```
 Standby hello time 3 seconds Standby holdtime 10 seconds
 ```
+
+● HSRP 상태
+  (1) Initial State
+  (2) Learn State (State Code = 1)
+  액티브 라우터에서 헬로 메시지를 아직 수신하지 못함, 자신의 가상 IP Address를 알지 못함
+  (3) Listen State (Staet Code = 2)
+  (4) Speak State (State Code = 4)
+  (5) Standby State (State Code = 8)
+  (6) Active State
+
+
+## FHRP(First Hop Redundancy Protoocols)
+### 실습
+
 # 2. VRRP(Virtual Router Redundancy Protocol) <Standard Protocol>
 
 # 3. GLBP(Gateway Load Balancing Protocol)    <CISCO Protocol>
