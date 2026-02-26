@@ -9,6 +9,7 @@
   - Standby Router : Active Router 장애 발생에 대비한 백업 라우터
   - virtual Router : 실제 라우터가 아닌 HSRP 그룹 개념 가상라우터로 패킷이 전송되면 실제로 패킷을 전달하는 것은 액티브 라우터.
   - Member Router : Active, Standby 둘다 아니지만 액티브와 스탠바이를 모니터링.
+    
 ● HSRP 특징
   - UDP 1985번 포트 / Multicast 224.0.0.2를 사용한다.
   - HSRP는 Layer-3 이상에서 동작을 수행한다.
@@ -28,11 +29,89 @@ Standby hello time 3 seconds Standby holdtime 10 seconds
   (4) Speak State (State Code = 4)
   (5) Standby State (State Code = 8)
   (6) Active State
+  
+● HSRP 설정시 고려사항
+  (1) VLAN을 통한 HSRP인지 Physical Port를 통한 hsrp인지 구분
+  (2) virtual route rG/W
+  (3) VLAN G/W
+  (4) 우선순위 Priority 우선순위가 같은 경우 일반적으로 IP가 높은 쪽이 Active
+  (5) Hello Dead주기 timer(Sec)
+  (6) hsrp group number
+  (7) track
+  (8) preempt
+  (9) authentication
 
 
-## FHRP(First Hop Redundancy Protoocols)
-### 실습
+## FHRP(First Hop Redundancy Protoocols) 실
+### 🛠️ R1 설정 (중앙 라우터)
+conf t
+ hostname R1
 
+ interface s0/0
+  ip address <R1_R2_LINK_IP> <MASK_30>
+  no shutdown
+
+ interface s0/1
+  ip address <R1_R3_LINK_IP> <MASK_30>
+  no shutdown
+
+ ip routing
+end
+### 🛠️ R2 설정 (HSRP Standby)
+conf t
+ hostname R2
+
+ interface f0/0
+  ip address <R2_LAN_IP> <PC_MASK>
+  no shutdown
+
+  standby version 2
+  standby <HSRP_GROUP> ip <GW_VIP>
+  standby <HSRP_GROUP> priority <R2_PRIORITY>
+  standby <HSRP_GROUP> authentication md5 key-string <HSRP_KEY>
+  standby <HSRP_GROUP> timers <HELLO> <HOLD>
+
+ interface s0/0
+  ip address <R2_R1_LINK_IP> <MASK_30>
+  no shutdown
+
+ ip routing
+end
+
+### R3 설정 (HSRP Active + Tracking + Preempt)
+conf t
+ hostname R3
+
+ interface f0/0
+  ip address <R3_LAN_IP> <PC_MASK>
+  no shutdown
+
+  standby version 2
+  standby <HSRP_GROUP> ip <GW_VIP>
+  standby <HSRP_GROUP> priority <R3_PRIORITY>
+  standby <HSRP_GROUP> preempt
+  standby <HSRP_GROUP> authentication md5 key-string <HSRP_KEY>
+  standby <HSRP_GROUP> timers <HELLO> <HOLD>
+  standby <HSRP_GROUP> track <TRACK_IF> <TRACK_DEC>
+
+ interface s0/1
+  ip address <R3_R1_LINK_IP> <MASK_30>
+  no shutdown
+
+ ip routing
+end
+
+### 🖥️ PC 설정 (VPCS 기준)
+PC1> ip <PC1_IP> <PC_MASK> <GW_VIP>
+PC2> ip <PC2_IP> <PC_MASK> <GW_VIP>
+
+### 🧪 검증 & 디버그 전체 흐름
+✅ 상태 확인
+show standby brief
+show ip interface brief
+
+R3(config)#interface f0/0
+R3(config-if)#shutdown
 # 2. VRRP(Virtual Router Redundancy Protocol) <Standard Protocol>
 
 # 3. GLBP(Gateway Load Balancing Protocol)    <CISCO Protocol>
