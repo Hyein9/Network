@@ -66,7 +66,7 @@ Disabled -> Blocking(20초) -> Listening(15초) -> Learning (15초) -> Forwardin
 STP 스패닝 트리 프로토콜
 - 스위치나 브리지에서 루핑을 막아주는 프로토콜
 - 스위치나 브리지 구성에서 출발지로부터 목적지까지의 
-
+```
 SW1#sh spanning-tree 
 VLAN0001
   Spanning tree enabled protocol ieee
@@ -85,7 +85,9 @@ Interface        Role Sts Cost      Prio.Nbr Type
 ---------------- ---- --- --------- -------- --------------------------------
 Fa0/1            Desg FWD 19        128.1    P2p
 Fa0/2            Root FWD 19        128.2    P2p
+```
 
+```
 SW1#sh version
 Cisco Internetwork Operating System Software
 IOS (tm) C2950 Software (C2950-I6Q4L2-M), Version 12.1(22)EA4, RELEASE SOFTWARE(fc1)
@@ -114,11 +116,13 @@ Motherboard revision number: A0
 Model number: WS-C2950-24
 System serial number: FHK0610Z0WC
 Configuration register is 0xF
+```
 
 Root bridge 선출
 - 상대방과 bridge id 비교해서 낮은 값을 root bridge 선출
 - 스위치들은 root id가 root bridge의 id값으로 변경
 - root bridge가 선출되면 다른 스위치들은 매 2초마다 bpdu 수신
+```
 Switch(config)#spanning-tree vlan 1 root primary 
 
 Switch#sh spanning-tree 
@@ -138,8 +142,9 @@ Interface        Role Sts Cost      Prio.Nbr Type
 ---------------- ---- --- --------- -------- --------------------------------
 Fa0/1            Desg FWD 19        128.1    P2p
 Fa0/2            Desg LRN 19        128.2    P2p
-
+```
 - 블락포트가 3번스위치로 밀려남 -
+```
 SW3(config)#do sh spa
 VLAN0001
   Spanning tree enabled protocol ieee
@@ -157,8 +162,8 @@ Interface        Role Sts Cost      Prio.Nbr Type
 ---------------- ---- --- --------- -------- --------------------------------
 Fa0/2            Desg LSN 19        128.2    P2p
 Fa0/1            Desg FWD 19        128.1    P2p
-
-
+```
+```
 SW1(config)#spanning-tree vlan 1 root primary 
 SW1(config)#do sh spa
 VLAN0001
@@ -177,8 +182,8 @@ Interface        Role Sts Cost      Prio.Nbr Type
 ---------------- ---- --- --------- -------- --------------------------------
 Fa0/1            Desg LSN 19        128.1    P2p
 Fa0/2            Desg FWD 19        128.2    P2p
-
-
+```
+```
 Switch(config)#spanning-tree vlan 1 root primary 
 Switch(config)#do sh spa
 VLAN0001
@@ -197,7 +202,8 @@ Interface        Role Sts Cost      Prio.Nbr Type
 ---------------- ---- --- --------- -------- --------------------------------
 Fa0/1            Desg FWD 19        128.1    P2p
 Fa0/2            Desg LSN 19        128.2    P2p
-
+```
+```
 SW3(config)#do sh spa
 VLAN0001
   Spanning tree enabled protocol ieee
@@ -215,7 +221,8 @@ Interface        Role Sts Cost      Prio.Nbr Type
 ---------------- ---- --- --------- -------- --------------------------------
 Fa0/2            Desg LSN 19        128.2    P2p
 Fa0/1            Desg FWD 19        128.1    P2p
-
+```
+```
 SW1(config)#do sh spa
 VLAN0001
   Spanning tree enabled protocol ieee
@@ -233,8 +240,8 @@ Interface        Role Sts Cost      Prio.Nbr Type
 ---------------- ---- --- --------- -------- --------------------------------
 Fa0/1            Desg LSN 19        128.1    P2p
 Fa0/2            Desg FWD 19        128.2    P2p
-
-
+```
+```
 Switch(config)#do sh spa
 VLAN0001
   Spanning tree enabled protocol ieee
@@ -252,12 +259,13 @@ Interface        Role Sts Cost      Prio.Nbr Type
 ---------------- ---- --- --------- -------- --------------------------------
 Fa0/1            Desg FWD 19        128.1    P2p
 Fa0/2            Desg LSN 19        128.2    P2p
-
+```
 primary 값이 
 4096의 배수만큼 돌면서 관리자가 직접 static으로 지정가능하고
 가장 낮은 값으로 바뀔 것이고 가장 높은 값과 낮은값 사이 계산해서 작게 설정 이후에 0이 될때까지 사용가능하나 나머지가 동일하게 0이 되면 
 
 리셋 후 
+```
 Switch(config)#spanning-tree vlan 1 root secondary 
 Switch(config)#do sh spa
 VLAN0001
@@ -276,7 +284,7 @@ Interface        Role Sts Cost      Prio.Nbr Type
 ---------------- ---- --- --------- -------- --------------------------------
 Fa0/1            Desg FWD 19        128.1    P2p
 Fa0/2            Desg FWD 19        128.2    P2p
-
+```
 
 
 
@@ -328,6 +336,7 @@ STP에서는 이게 그냥 Blocked Port로 뭉뚱그려짐
 “루트로 가는 예비 경로”
 
 🧠 한 방에 이해하는 그림 느낌
+```
       [ Root Bridge ]
            |
          (DP)
@@ -338,7 +347,7 @@ STP에서는 이게 그냥 Blocked Port로 뭉뚱그려짐
       |      |
     [SW2]———[SW3]
           (DP)
-
+```
 
 SW1 → Root로 가는 포트 = Root Port
 
