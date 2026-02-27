@@ -308,8 +308,8 @@ HSRP = 3초마다(양방향)
   - Virtual-router의 IP와 실제 Router IP가 같을 때 (IP Address Owner)
     이 경우 track옵션이 비활성되어야 한다.
   - 라우터의 우선순위 결정 값은 1-254까지
-  - Priority가 높은 쪽(Deafult = 100)
-  - 인터페이스 IP주소가 높은쪽
+  - Priority가 높은 라우터 (Deafult = 100)
+  - 인터페이스 IP주소가 높은 라우터
   - Virtual MAC address 0000.5e00.01XX
     0000.5e00.01 >> VRRP 고정 MAC 값 XX -> VRRP 그룹 번호
 
@@ -434,6 +434,11 @@ FastEthernet0/0 - Group 10
   Master Router is 192.168.10.100 (local), priority is 150
   Master Advertisement interval is 1.000 sec
   Master Down interval is 3.414 sec
+```
+
+```
+R2(config-if)#vrrp 10 authentication AWS
+R2(config-if)#vrrp 10 authentication md5 key-string AWS
 ```
 
 # 3. GLBP(Gateway Load Balancing Protocol)    <CISCO Protocol>
