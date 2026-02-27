@@ -393,5 +393,43 @@ FastEthernet0/0 - Group 10
   Master Down interval is 9.609 sec (expires in 7.125 sec) Learning
 학습에 의해 변경된 것이라 learning이라고 표시됨
 
+R2(config-if)#do sh vrrp
+FastEthernet0/0 - Group 10
+  State is Master
+  Virtual IP address is 192.168.10.1
+  Virtual MAC address is 0000.5e00.010a
+  Advertisement interval is 1.000 sec
+  Preemption enabled
+  Priority is 90  (cfgd 150)
+    Track object 10 state Down decrement 60
+  Master Router is 192.168.10.100 (local), priority is 90
+  Master Advertisement interval is 1.000 sec
+  Master Down interval is 3.414 sec
+
+no sh 후
+```
+R2(config)#track 10 interface s0/0 line-protocol
+R2(config-track)#int f0/0
+R2(config-if)#vrrp 10 track 10 decrement 60
+
+R2(config-track)#int s0/0
+R2(config-track)#sh
+``` line-protocol up -> Down & int s0/0 changed state to down
+
+```
+R2(config-if)#do sh vrrp
+FastEthernet0/0 - Group 10
+  State is Master
+  Virtual IP address is 192.168.10.1
+  Virtual MAC address is 0000.5e00.010a
+  Advertisement interval is 1.000 sec
+  Preemption enabled
+  Priority is 150
+    Track object 10 state Up decrement 60
+  Master Router is 192.168.10.100 (local), priority is 150
+  Master Advertisement interval is 1.000 sec
+  Master Down interval is 3.414 sec
+```
+
 # 3. GLBP(Gateway Load Balancing Protocol)    <CISCO Protocol>
 
