@@ -391,6 +391,8 @@ FastEthernet0/0 - Group 10
   Master Router is 192.168.10.100, priority is 150
   Master Advertisement interval is 3.000 sec
   Master Down interval is 9.609 sec (expires in 7.125 sec) Learning
+```
+
 학습에 의해 변경된 것이라 learning이라고 표시됨
 
 ```
