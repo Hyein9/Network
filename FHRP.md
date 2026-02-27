@@ -289,7 +289,7 @@ Vlan10 - Group 10
 ### 특징
 (1) HSRP와 같이 이중화게이트웨잉 프로토콜
 (2) 라우터 그룹을 하나의 가상 라우터로 형성 가능
-(3) HSRP와 달리 표준 프로토콜, Multi-vandor 환경에서 이중화 프로토콜 사용이 가능
+(3) HSRP와 달리 표준 프로토콜, Multi-vendor 환경에서 이중화 프로토콜 사용이 가능
 
 Master(VRRP) = Active(HSRP) 1대
 
@@ -313,6 +313,85 @@ HSRP = 3초마다(양방향)
   - Virtual MAC address 0000.5e00.01XX
     0000.5e00.01 >> VRRP 고정 MAC 값 XX -> VRRP 그룹 번호
 
+```
+R2(config-if)#do sh vrrp
+FastEthernet0/0 - Group 10
+  State is Backup
+  Virtual IP address is 192.168.10.1
+  Virtual MAC address is 0000.5e00.010a
+  Advertisement interval is 1.000 sec
+  Preemption enabled
+  Priority is 100
+  Master Router is 192.168.10.200, priority is 100
+  Master Advertisement interval is 1.000 sec
+  Master Down interval is 3.609 sec (expires in 3.093 sec)
+```
+```
+R3(config-if)#do sh vrrp
+FastEthernet0/0 - Group 10
+  State is Master
+  Virtual IP address is 192.168.10.1
+  Virtual MAC address is 0000.5e00.010a
+  Advertisement interval is 1.000 sec
+  Preemption enabled
+  Priority is 100
+  Master Router is 192.168.10.200 (local), priority is 100
+  Master Advertisement interval is 1.000 sec
+  Master Down interval is 3.609 sec
+```
+  - preemption 기본적으로 활성화됨. 나중에 시작했다더라도 ip가 높아지면 마스터 결정됨
+  - backup(standby)정보 출력 안됨. Master에 대한 정보만 출력.
+  
+  - 2번라우터에 priority 높이기 ```vrrp 10 priority 150```
+    잠깐 10 shutdown하면 state master -> init Wireshark에서 ```priority : 0``` 으로 변경됨.
+
+(3) R3에 물리적 주소로 변경
+```
+R3(config)#int f0/0
+R3(config-if)#ip add 192.168.10.1 255.255.255.0
+R3(config-if)#
+*Mar  1 00:22:14.739: %OSPF-5-ADJCHG: Process 3, Nbr 192.168.10.100 on FastEthernet0/0 from FULL to DOWN, Neighbor Down: Interface down or detached
+R3(config-if)#
+*Mar  1 00:22:14.747: %VRRP-6-STATECHANGE: Fa0/0 Grp 10 state Backup -> Disable
+*Mar  1 00:22:14.747: %VRRP-6-STATECHANGE: Fa0/0 Grp 10 state Init -> Master
+*Mar  1 00:22:14.767: %VRRP-6-STATECHANGE: Fa0/0 Grp 10 state Master -> Disable
+*Mar  1 00:22:14.771: %VRRP-6-STATECHANGE: Fa0/0 Grp 10 state Init -> Master
+```
+후에 되돌림 ip add 192.168.10.200 255.255.255.0
+
+
+(4) R2에 시간 변경
+``` vrrp 10 timers advertise 3 ```
+```
+R2(config-if)#do sh vrrp
+FastEthernet0/0 - Group 10
+  State is Master
+  Virtual IP address is 192.168.10.1
+  Virtual MAC address is 0000.5e00.010a
+  Advertisement interval is 3.000 sec
+  Preemption enabled
+  Priority is 150
+  Master Router is 192.168.10.100 (local), priority is 150
+  Master Advertisement interval is 3.000 sec
+  Master Down interval is 9.414 sec
+```
+R3은 현재 1초로 출력되지만
+```
+R3(config-if)#vrrp 10 timers learn
+R3(config-if)#
+*Mar  1 00:27:47.587: %VRRP-6-STATECHANGE: Fa0/0 Grp 10 state Master -> Backup
+R3(config-if)#do sh vrrp
+FastEthernet0/0 - Group 10
+  State is Backup
+  Virtual IP address is 192.168.10.1
+  Virtual MAC address is 0000.5e00.010a
+  Advertisement interval is 1.000 sec
+  Preemption disabled
+  Priority is 100
+  Master Router is 192.168.10.100, priority is 150
+  Master Advertisement interval is 3.000 sec
+  Master Down interval is 9.609 sec (expires in 7.125 sec) Learning
+학습에 의해 변경된 것이라 learning이라고 표시됨
 
 # 3. GLBP(Gateway Load Balancing Protocol)    <CISCO Protocol>
 
