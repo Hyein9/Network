@@ -286,6 +286,33 @@ Vlan10 - Group 10
 ✔ HSRP 인증 키 다르면 Active/Standby 절대 안 됨
 
 # 2. VRRP(Virtual Router Redundancy Protocol) <Standard Protocol>
+### 특징
+(1) HSRP와 같이 이중화게이트웨잉 프로토콜
+(2) 라우터 그룹을 하나의 가상 라우터로 형성 가능
+(3) HSRP와 달리 표준 프로토콜, Multi-vandor 환경에서 이중화 프로토콜 사용이 가능
+
+Master(VRRP) = Active(HSRP) 1대
+
+Backup(VRRP) = Standby(HSRP) 여러대~
+
+1초마다 VRRP 정보를 전송(※ Master -> Backup 단방향)
+
+HSRP = 3초마다(양방향)
+- UDP 112 번 사용
+- HSRP= 1985번
+- Multicast = 224.0.0.18
+- HSRP Multicast = 224.0.0.2
+  시리제 포트 주소를 가상 주소로 사용이 가능하다
+
+### VRRP Master 결정조건
+  - Virtual-router의 IP와 실제 Router IP가 같을 때 (IP Address Owner)
+    이 경우 track옵션이 비활성되어야 한다.
+  - 라우터의 우선순위 결정 값은 1-254까지
+  - Priority가 높은 쪽(Deafult = 100)
+  - 인터페이스 IP주소가 높은쪽
+  - Virtual MAC address 0000.5e00.01XX
+    0000.5e00.01 >> VRRP 고정 MAC 값 XX -> VRRP 그룹 번호
+
 
 # 3. GLBP(Gateway Load Balancing Protocol)    <CISCO Protocol>
 
