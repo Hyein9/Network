@@ -37,24 +37,24 @@ Disabled -> Blocking(20초) -> Listening(15초) -> Learning (15초) -> Forwardin
 
 
 스패닝트리 프로토콜 종류
-1. CST (Common Spanning Tree)
+*1. CST (Common Spanning Tree)*
 - 물리적인 네트워크 연결을 기반으로 하나의 Port를 Block 시켜 루프를 방지
  
-2. PVST (Per Vlan Spanning Tree)
+*2. PVST (Per Vlan Spanning Tree)*
 - 기존 STP의 확장판으로 VLAN 별로 하나의 Port를 Block 시킴.
 - 시스코 전용 프로토콜의 프로토콜로 CST와 호환되지않음.
 
-3. PVST+ 
+*3. PVST+* 
 - PVST의 확장판
 - 802.1q 트렁크 방식 지원
 - 시스코 전용, CST와 호환
 
 
-4. RSTP 
+*4. RSTP* 
 - STP의 진화형으로 빠른 수렴 속도를 가짐
 
 
-5. PVRST
+*5. PVRST*
 - 시스코에서 만든 RSTP의 확장판
 
 
