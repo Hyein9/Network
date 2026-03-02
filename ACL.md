@@ -1,4 +1,4 @@
-1. Access-list 접근제어목록
+# 1. Access-list 접근제어목록
 - 네트워크 장비에서 원하지않는 traffic이 존재할때 이러한 traffic이 네트워크를 경유하거나 접근할 수 있는 것을 차단할 필요성 있을 때 필터링 기법을 이용하여 차단
 
 routing table update 시 routing table의 어느부분을 전달하지않게 하고자할때
