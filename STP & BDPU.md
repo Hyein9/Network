@@ -36,7 +36,7 @@ Disabled -> Blocking(20초) -> Listening(15초) -> Learning (15초) -> Forwardin
 
 
 
-스패닝트리 프로토콜 종류
+## 스패닝트리 프로토콜 종류
 #### 1. CST (Common Spanning Tree)
 - 물리적인 네트워크 연결을 기반으로 하나의 Port를 Block 시켜 루프를 방지
  
