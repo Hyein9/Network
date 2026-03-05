@@ -113,3 +113,9 @@ PC에서:
 ping 8.8.8.8
 ping www.google.com
 ```
+
+추가 명령어 
+#### Interface Overload(PAT)
+```
+ip nat inside source list 1 int f0/1 overload
+```
