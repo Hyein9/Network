@@ -74,7 +74,7 @@ access-list 1 permit 172.16.100.0 0.0.0.255
 #### NAT Pool 생성
 ```ip nat pool NAT_POOL 10.100.105.241 10.100.105.243 netmask 255.255.255.0```
 
-### Dynamic NAT 적용
+#### Dynamic NAT 적용
 ```ip nat inside source list 1 pool NAT_POOL```
 
 기본 경로
