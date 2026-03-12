@@ -603,3 +603,383 @@ show ip cef
 # Author
 
 Network Lab - PBR Practice
+
+
+---
+
+# OSPF Redistribution & Route-map Metric Control
+
+이번 단계에서는 **R1의 Loopback 네트워크를 OSPF에 재분배(redistribute)** 하면서  
+**Route-map을 이용하여 Metric과 Metric Type을 제어**한다.
+
+이를 통해 **OSPF External Route의 동작(E1 / E2)**을 확인한다.
+
+---
+
+# Step 1 OSPF Network 제거
+
+기존에는 Loopback을 **OSPF network 명령으로 광고**하고 있었다.
+
+이를 제거한다.
+
+```cisco
+R1(config)#router ospf 1
+R1(config-router)#no network 192.168.1.0 0.0.0.255 area 0
+R1(config-router)#no network 192.168.11.0 0.0.0.255 area 0
+```
+
+설명
+
+```
+Loopback을 OSPF에서 직접 광고하지 않도록 제거
+```
+
+---
+
+# Step 2 Connected Redistribution 설정
+
+Loopback을 **redistribute connected** 방식으로 광고한다.
+
+```cisco
+R1(config-router)#redistribute connected subnets
+```
+
+설명
+
+```
+Connected Network → OSPF External Route로 광고
+```
+
+---
+
+# Step 3 Route-map 생성 (Metric Control)
+
+Route-map을 이용해 **특정 네트워크의 OSPF Metric을 조정**한다.
+
+---
+
+## ACL 생성
+
+```cisco
+R1(config)#access-list 10 permit 192.168.1.0 0.0.0.255
+```
+
+설명
+
+```
+R1 Loopback0
+192.168.1.0/24
+```
+
+---
+
+## Route-map 생성
+
+```cisco
+R1(config)#route-map RE permit 10
+R1(config-route-map)#match ip address 10
+R1(config-route-map)#set metric 99
+```
+
+설명
+
+```
+192.168.1.0/24
+
+OSPF Metric
+99
+```
+
+---
+
+# Step 4 Redistribution에 Route-map 적용
+
+```cisco
+R1(config)#router ospf 1
+R1(config-router)#redistribute connected subnets route-map RE
+```
+
+설명
+
+```
+Connected → OSPF
+
+하지만 Route-map 조건 적용
+```
+
+---
+
+# Step 5 두 번째 정책 추가
+
+다른 Loopback에 대해 **Metric Type 변경**
+
+---
+
+## ACL 생성
+
+```cisco
+R1(config)#access-list 11 permit 192.168.11.0 0.0.0.255
+```
+
+---
+
+## Route-map 추가
+
+```cisco
+R1(config)#route-map RE permit 20
+R1(config-route-map)#match ip address 11
+R1(config-route-map)#set metric-type type-1
+```
+
+설명
+
+```
+192.168.11.0/24
+
+OSPF External Type
+E1
+```
+
+---
+
+# OSPF External Route Type
+
+OSPF External Route에는 두 가지 타입이 있다.
+
+---
+
+## E1 (External Type 1)
+
+```
+Total Cost
+
+External Metric
++
+Internal OSPF Cost
+```
+
+즉
+
+```
+경로 길이에 영향 받음
+```
+
+---
+
+## E2 (External Type 2)
+
+```
+External Metric만 사용
+```
+
+즉
+
+```
+Internal OSPF Cost 무시
+```
+
+---
+
+# Routing Table 확인 (R2)
+
+```
+R2#show ip route
+```
+
+---
+
+## 결과 1
+
+```
+O E2 192.168.1.0/24 [110/99] via 10.1.1.1
+```
+
+설명
+
+```
+OSPF External Type 2
+Metric
+99
+```
+
+---
+
+## 결과 2
+
+```
+O E1 192.168.11.0/24 [110/30] via 10.1.1.1
+```
+
+설명
+
+```
+OSPF External Type 1
+Internal Cost 포함
+```
+
+---
+
+# Routing Table 분석
+
+| Network | Type | Metric |
+|------|------|------|
+| 192.168.1.0 | O E2 | 99 |
+| 192.168.11.0 | O E1 | Internal + External |
+
+---
+
+# Packet Flow 영향
+
+### E2
+
+```
+Metric 고정
+
+Topology 영향 적음
+```
+
+---
+
+### E1
+
+```
+Internal Cost 포함
+
+Shortest Path 영향
+```
+
+---
+
+# 실제 Routing Table
+
+Example
+
+```
+R2#show ip route
+
+O E1 192.168.11.0/24 [110/30] via 10.1.1.1
+O E2 192.168.1.0/24 [110/99] via 10.1.1.1
+```
+
+---
+
+# Lab에서 확인 가능한 핵심 개념
+
+이번 실습에서 확인한 기술
+
+```
+Policy Based Routing
+OSPF Redistribution
+Route-map
+OSPF External Route
+Metric Control
+```
+
+---
+
+# 실무 응용
+
+이 구조는 실제 네트워크에서 매우 많이 사용된다.
+
+---
+
+## 1 Multi-Protocol Routing
+
+예
+
+```
+BGP → OSPF
+Static → OSPF
+EIGRP → OSPF
+```
+
+Route Redistribution 시
+
+```
+Route-map으로 정책 제어
+```
+
+---
+
+## 2 Metric Control
+
+특정 경로를 **우선순위 낮게 설정**
+
+예
+
+```
+Backup Link
+DR Site
+```
+
+---
+
+## 3 Traffic Engineering
+
+특정 네트워크를
+
+```
+Primary Path
+Backup Path
+```
+
+로 제어
+
+---
+
+## 4 ISP Edge Design
+
+예
+
+```
+Internet → BGP
+Internal → OSPF
+```
+
+Redistribution 시
+
+```
+Metric Control 필수
+```
+
+---
+
+# Lab Summary
+
+이번 실습에서는 다음 기술을 동시에 구성했다.
+
+```
+PBR
+OSPF
+Redistribution
+Route-map
+Metric Control
+OSPF E1 / E2
+```
+
+---
+
+# Key Takeaway
+
+Route-map은 다음 기능을 수행할 수 있다.
+
+```
+Routing Policy Control
+Metric Manipulation
+Route Filtering
+Traffic Engineering
+```
+
+---
+
+# Useful Verification Commands
+
+```
+show ip route
+show ip ospf database
+show ip policy
+show route-map
+show access-lists
+```
+
+---
