@@ -232,3 +232,374 @@ TCAM / Hardware PBR
 - Cisco Policy Based Routing
 - Linux iproute2
 - RFC 1812 Router Requirements
+
+# Policy Based Routing (PBR) Lab
+
+## Lab Overview
+
+이 실습에서는 **Policy Based Routing (PBR)**을 이용하여  
+특정 트래픽을 **기본 라우팅 경로가 아닌 다른 경로로 우회시키는 방법**을 학습한다.
+
+기본적으로 R1 → R5 통신은 **R2 → R3 → R4** 경로를 사용하지만  
+**PBR을 이용해 R2 → R4 (Serial Link)** 경로로 보내도록 구성한다.
+
+---
+
+# Network Topology
+
+![topology](./topology.png)
+
+---
+
+# Network Addressing
+
+| Device | Interface | IP |
+|------|------|------|
+| R1 | F0/0 | 10.1.1.1/24 |
+| R1 | Lo0 | 192.168.1.1/24 |
+| R1 | Lo1 | 192.168.11.1/24 |
+| R2 | F0/0 | 10.1.1.2/24 |
+| R2 | F0/1 | 10.1.23.1/24 |
+| R2 | S0/0 | 10.1.24.1/24 |
+| R3 | F0/1 | 10.1.23.2/24 |
+| R3 | F0/0 | 10.1.34.1/24 |
+| R4 | F0/1 | 10.1.34.2/24 |
+| R4 | F0/0 | 10.1.45.1/24 |
+| R4 | S0/0 | 10.1.24.4/24 |
+| R5 | F0/0 | 10.1.45.2/24 |
+| R5 | Lo0 | 172.16.5.1/24 |
+| R5 | Lo1 | 172.16.55.1/24 |
+
+---
+
+# Goal
+
+기본 경로
+
+```
+R1 → R2 → R3 → R4 → R5
+```
+
+PBR 적용 후
+
+```
+R1 → R2 → R4 → R5
+```
+
+즉 **R3를 우회하도록 정책 라우팅 적용**
+
+---
+
+# Step 1. Interface Configuration
+
+## R1
+
+```cisco
+conf t
+
+interface f0/0
+ip address 10.1.1.1 255.255.255.0
+no shutdown
+
+interface lo0
+ip address 192.168.1.1 255.255.255.0
+
+interface lo1
+ip address 192.168.11.1 255.255.255.0
+```
+
+---
+
+## R2
+
+```cisco
+conf t
+
+interface f0/0
+ip address 10.1.1.2 255.255.255.0
+no shutdown
+
+interface f0/1
+ip address 10.1.23.1 255.255.255.0
+no shutdown
+
+interface s0/0
+ip address 10.1.24.1 255.255.255.0
+clock rate 64000
+no shutdown
+```
+
+---
+
+## R3
+
+```cisco
+conf t
+
+interface f0/1
+ip address 10.1.23.2 255.255.255.0
+no shutdown
+
+interface f0/0
+ip address 10.1.34.1 255.255.255.0
+no shutdown
+```
+
+---
+
+## R4
+
+```cisco
+conf t
+
+interface f0/1
+ip address 10.1.34.2 255.255.255.0
+no shutdown
+
+interface f0/0
+ip address 10.1.45.1 255.255.255.0
+no shutdown
+
+interface s0/0
+ip address 10.1.24.4 255.255.255.0
+no shutdown
+```
+
+---
+
+## R5
+
+```cisco
+conf t
+
+interface f0/0
+ip address 10.1.45.2 255.255.255.0
+no shutdown
+
+interface lo0
+ip address 172.16.5.1 255.255.255.0
+
+interface lo1
+ip address 172.16.55.1 255.255.255.0
+```
+
+---
+
+# Step 2. Routing Configuration
+
+실습 단순화를 위해 **OSPF 사용**
+
+## R1
+
+```cisco
+router ospf 1
+network 10.1.1.0 0.0.0.255 area 0
+network 192.168.1.0 0.0.0.255 area 0
+network 192.168.11.0 0.0.0.255 area 0
+```
+
+---
+
+## R2
+
+```cisco
+router ospf 1
+network 10.1.1.0 0.0.0.255 area 0
+network 10.1.23.0 0.0.0.255 area 0
+network 10.1.24.0 0.0.0.255 area 0
+```
+
+---
+
+## R3
+
+```cisco
+router ospf 1
+network 10.1.23.0 0.0.0.255 area 0
+network 10.1.34.0 0.0.0.255 area 0
+```
+
+---
+
+## R4
+
+```cisco
+router ospf 1
+network 10.1.24.0 0.0.0.255 area 0
+network 10.1.34.0 0.0.0.255 area 0
+network 10.1.45.0 0.0.0.255 area 0
+```
+
+---
+
+## R5
+
+```cisco
+router ospf 1
+network 10.1.45.0 0.0.0.255 area 0
+network 172.16.5.0 0.0.0.255 area 0
+network 172.16.55.0 0.0.0.255 area 0
+```
+
+---
+
+# Step 3. 기본 경로 확인
+
+R1에서 traceroute
+
+```cisco
+traceroute 172.16.5.1
+```
+
+결과
+
+```
+R1
+R2
+R3
+R4
+R5
+```
+
+---
+
+# Step 4. Policy Based Routing 설정
+
+R2에서 **R1 트래픽을 R4로 직접 보내도록 설정**
+
+---
+
+## ACL 생성
+
+```cisco
+access-list 10 permit 192.168.1.0 0.0.0.255
+```
+
+---
+
+## Route-map 생성
+
+```cisco
+route-map PBR permit 10
+match ip address 10
+set ip next-hop 10.1.24.4
+```
+
+설명
+
+```
+R1 Loopback 트래픽 → R4로 직접 전달
+```
+
+---
+
+## Interface에 적용
+
+```cisco
+interface f0/0
+ip policy route-map PBR
+```
+
+R1에서 들어오는 트래픽에 PBR 적용
+
+---
+
+# Step 5. PBR 확인
+
+```cisco
+show route-map
+```
+
+```cisco
+show ip policy
+```
+
+```cisco
+show access-lists
+```
+
+---
+
+# Step 6. 결과 확인
+
+다시 traceroute
+
+```cisco
+traceroute 172.16.5.1
+```
+
+결과
+
+```
+R1
+R2
+R4
+R5
+```
+
+R3를 우회하는 것을 확인 가능
+
+---
+
+# Packet Flow
+
+Before PBR
+
+```
+R1 → R2 → R3 → R4 → R5
+```
+
+After PBR
+
+```
+R1 → R2 → R4 → R5
+```
+
+---
+
+# Key Takeaways
+
+PBR 특징
+
+- Destination 기반 라우팅이 아님
+- Policy 기반 라우팅
+- Source / Protocol / Port 기준 가능
+- Traffic Engineering 가능
+
+사용 사례
+
+```
+Multi ISP
+Security routing
+QoS routing
+Traffic engineering
+```
+
+---
+
+# Verification Commands
+
+```cisco
+show ip route
+show ip policy
+show route-map
+show access-lists
+show ip cef
+```
+
+---
+
+# Summary
+
+| Feature | Description |
+|------|------|
+| Routing Type | Policy Based |
+| Control Method | Route-map |
+| Match Tool | ACL |
+| Action | set ip next-hop |
+
+---
+
+# Author
+
+Network Lab - PBR Practice
