@@ -2,7 +2,7 @@
 
 ## 1. PBR (Policy Based Routing)이란?
 
-*Policy Based Routing (PBR)*은 일반적인 **Destination 기반 라우팅**과 달리
+**Policy Based Routing (PBR)**은 일반적인 **Destination 기반 라우팅**과 달리
 **정책(Policy)**에 따라 패킷의 라우팅 경로를 결정하는 기술이다.
 
 일반적인 라우팅은 다음과 같이 동작한다.
