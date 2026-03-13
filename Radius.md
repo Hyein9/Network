@@ -301,7 +301,6 @@ Client (192.168.10.10)
 - Switch (ESW1 VLAN1): 192.168.10.254
 - RADIUS Server: 192.168.10.100
 
----
 
 # 1. R1 (Router) Configuration
 
