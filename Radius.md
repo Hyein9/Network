@@ -270,15 +270,14 @@ Accounting     : UDP 1813
 
 # 8. 요약
 
-```
 RADIUS는 네트워크 사용자 인증을 중앙 서버에서 관리하는 AAA 프로토콜이다.
-```
+
 
 ```
 Authentication → 사용자 확인
 Authorization  → 권한 부여
 Accounting     → 접속 기록
-
+```
 
 # Cisco RADIUS AAA Configuration
 
