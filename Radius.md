@@ -457,7 +457,6 @@ Router / Switch
 Login Success or Fail
 ```
 
----
 
 # 6. 핵심 명령어 요약
 
@@ -470,7 +469,7 @@ line vty 0 4
 login authentication TELNET
 ```
 
----
+
 
 # 7. Troubleshooting
 
@@ -484,5 +483,4 @@ debug radius authentication
 
 ```
 debug aaa authentication
-```
 ```
