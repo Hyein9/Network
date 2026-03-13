@@ -278,4 +278,211 @@ RADIUS는 네트워크 사용자 인증을 중앙 서버에서 관리하는 AAA 
 Authentication → 사용자 확인
 Authorization  → 권한 부여
 Accounting     → 접속 기록
+
+
+# Cisco RADIUS AAA Configuration
+
+## Topology
+
+```
+Client (192.168.10.10)
+        |
+        |
+      ESW1
+   VLAN1: 192.168.10.254
+      /   \
+     /     \
+   R1     RADIUS Server
+192.168.10.1   192.168.10.100
+```
+
+- Client: 192.168.10.10
+- Router (R1): 192.168.10.1
+- Switch (ESW1 VLAN1): 192.168.10.254
+- RADIUS Server: 192.168.10.100
+
+---
+
+# 1. R1 (Router) Configuration
+
+R1에서 **RADIUS 기반 Telnet 로그인 인증**을 설정한다.
+
+```
+enable
+configure terminal
+```
+
+## AAA 활성화
+
+```
+aaa new-model
+```
+
+## RADIUS 인증 그룹 생성
+
+```
+aaa authentication login TELNET group radius
+```
+
+## RADIUS 서버 등록
+
+```
+radius-server host 192.168.10.100 auth-port 1812 key aws
+```
+
+## RADIUS 패킷 Source Interface 지정
+
+```
+ip radius source-interface f0/0
+```
+
+## VTY 라인 설정 (Telnet 로그인 시 RADIUS 사용)
+
+```
+line vty 0 4
+login authentication TELNET
+transport input telnet
+```
+
+## 권한 레벨 설정 (선택)
+
+```
+privilege exec level 15 show running-config
+```
+
+---
+
+# 2. R1 RADIUS 인증 테스트
+
+```
+test aaa group radius admin admin legacy
+```
+
+성공 시
+
+```
+User successfully authenticated
+```
+
+---
+
+# 3. ESW1 (Switch) Configuration
+
+ESW1에서도 동일하게 **RADIUS 로그인 인증**을 설정한다.
+
+```
+enable
+configure terminal
+```
+
+## VLAN 인터페이스 설정
+
+```
+interface vlan 1
+ip address 192.168.10.254 255.255.255.0
+no shutdown
+exit
+```
+
+## AAA 활성화
+
+```
+aaa new-model
+```
+
+## RADIUS 인증 설정
+
+```
+aaa authentication login TELNET group radius
+```
+
+## RADIUS 서버 등록
+
+```
+radius-server host 192.168.10.100 auth-port 1812 key aws
+```
+
+## Source Interface 설정
+
+```
+ip radius source-interface vlan 1
+```
+
+## VTY 설정
+
+```
+line vty 0 4
+login authentication TELNET
+transport input telnet
+```
+
+---
+
+# 4. 테스트
+
+Client에서 Telnet 접속 테스트
+
+```
+telnet 192.168.10.1
+```
+
+또는
+
+```
+telnet 192.168.10.254
+```
+
+로그인 시 **RADIUS 서버 인증을 통해 접속**된다.
+
+---
+
+# 5. 인증 흐름
+
+```
+Client
+  |
+  | Telnet Login
+  v
+Router / Switch
+  |
+  | RADIUS Access-Request
+  v
+RADIUS Server (192.168.10.100)
+  |
+  | Access-Accept / Reject
+  v
+Router / Switch
+  |
+  v
+Login Success or Fail
+```
+
+---
+
+# 6. 핵심 명령어 요약
+
+```
+aaa new-model
+aaa authentication login TELNET group radius
+radius-server host 192.168.10.100 auth-port 1812 key aws
+ip radius source-interface f0/0
+line vty 0 4
+login authentication TELNET
+```
+
+---
+
+# 7. Troubleshooting
+
+디버그로 RADIUS 패킷 확인
+
+```
+debug radius authentication
+```
+
+또는
+
+```
+debug aaa authentication
+```
 ```
