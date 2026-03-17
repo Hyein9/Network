@@ -2,7 +2,7 @@
 
 ---
 
-# 1️⃣ 개념
+## 1️⃣ 개념
 
 - 내부 → 외부 트래픽 기준으로 세션 생성 (reflect)
 - 외부 → 내부는 해당 세션 응답만 허용 (evaluate)
@@ -10,7 +10,7 @@
 
 ---
 
-# 2️⃣ 토폴로지
+## 2️⃣ 토폴로지
 
 ```
 R1 --- R2 --- R3 --- R4
@@ -22,9 +22,9 @@ R1 --- R2 --- R3 --- R4
 
 ---
 
-# 3️⃣ IP 설정
+## 3️⃣ IP 설정
 
-## R1
+### R1
 ```bash
 conf t
 int s0/0
@@ -33,7 +33,7 @@ int s0/0
 exit
 ```
 
-## R2
+### R2
 ```bash
 conf t
 int s0/0
@@ -47,7 +47,7 @@ int s0/1
 exit
 ```
 
-## R3
+### R3
 ```bash
 conf t
 int s0/0
@@ -61,7 +61,7 @@ int s0/1
 exit
 ```
 
-## R4
+### R4
 ```bash
 conf t
 int s0/0
@@ -72,29 +72,29 @@ exit
 
 ---
 
-# 4️⃣ OSPF 설정
+## 4️⃣ OSPF 설정
 
-## R1
+### R1
 ```bash
 router ospf 1
  network 1.1.12.0 0.0.0.255 area 0
 ```
 
-## R2
+### R2
 ```bash
 router ospf 1
  network 1.1.12.0 0.0.0.255 area 0
  network 1.1.23.0 0.0.0.255 area 0
 ```
 
-## R3
+### R3
 ```bash
 router ospf 1
  network 1.1.23.0 0.0.0.255 area 0
  network 1.1.34.0 0.0.0.255 area 0
 ```
 
-## R4
+### R4
 ```bash
 router ospf 1
  network 1.1.34.0 0.0.0.255 area 0
@@ -102,9 +102,9 @@ router ospf 1
 
 ---
 
-# 5️⃣ Telnet 설정
+## 5️⃣ Telnet 설정
 
-## R1 / R4
+### R1 / R4
 ```bash
 conf t
 line vty 0 4
@@ -116,9 +116,9 @@ end
 
 ---
 
-# 6️⃣ RACL 설정 (R2)
+## 6️⃣ RACL 설정 (R2)
 
-## OUT ACL (세션 생성)
+### OUT ACL (세션 생성)
 ```bash
 conf t
 ip access-list extended acl-out
@@ -129,7 +129,7 @@ ip access-list extended acl-out
 exit
 ```
 
-## IN ACL (세션 검사)
+### IN ACL (세션 검사)
 ```bash
 ip access-list extended acl-in
  permit ospf host 1.1.23.3 any
@@ -137,7 +137,7 @@ ip access-list extended acl-in
 exit
 ```
 
-## 인터페이스 적용
+### 인터페이스 적용
 ```bash
 int s0/1
  ip access-group acl-out out
@@ -147,22 +147,22 @@ end
 
 ---
 
-# 7️⃣ 테스트
+## 7️⃣ 테스트
 
-## 내부 → 외부
+### 내부 → 외부
 ```bash
 R1# ping 1.1.34.4
 R1# telnet 1.1.34.4
 ```
 
-## 외부 → 내부 (차단)
+### 외부 → 내부 (차단)
 ```bash
 R4# telnet 1.1.12.1
 ```
 
 ---
 
-# 8️⃣ 외부 허용 (옵션)
+## 8️⃣ 외부 허용 (옵션)
 
 ```bash
 conf t
@@ -173,7 +173,7 @@ end
 
 ---
 
-# 9️⃣ 트러블슈팅
+## 9️⃣ 트러블슈팅
 
 ```bash
 show ip ospf neighbor
@@ -184,7 +184,7 @@ show ip access-lists
 
 ---
 
-# 🔥 핵심 요약
+## 🔥 핵심 요약
 
 - reflect → 세션 생성
 - evaluate → 세션 검사
@@ -193,6 +193,6 @@ show ip access-lists
 
 ---
 
-# 💬 한 줄 정리
+## 💬 한 줄 정리
 
 👉 내가 요청한 것만 응답 허용
