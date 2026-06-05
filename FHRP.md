@@ -79,7 +79,7 @@ Standby hello time 3 seconds Standby holdtime 10 seconds
 
 
 
-### 🛠️ R1 설정 (중앙 라우터)
+### R1 설정 (중앙 라우터)
 ```
 conf t
  hostname R1
@@ -95,7 +95,7 @@ conf t
  ip routing
 end
 ```
-### 🛠️ R2 설정 (HSRP Standby)
+### R2 설정 (HSRP Standby)
 ```
 conf t
  hostname R2
@@ -143,8 +143,8 @@ conf t
 end
 ```
 
-### 🧪 검증 & 디버그 전체 흐름
-✅ 상태 확인
+### 검증 & 디버그 전체 흐름
+상태 확인
 ```
 show standby brief
 show ip interface brief
@@ -154,7 +154,7 @@ R3(config)#interface f0/0
 R3(config-if)#shutdown
 
 
-#### ✅ R2에서 기존 VIP 제거 + 새 VIP 등록
+#### R2에서 기존 VIP 제거 + 새 VIP 등록
 ```
 conf t
  interface f0/0
@@ -162,7 +162,7 @@ conf t
   standby <HSRP_GRP> ip <NEW_VIP>
 end
 ```
-#### ✅ R3에서 기존 VIP 제거 + 새 VIP 등록
+#### R3에서 기존 VIP 제거 + 새 VIP 등록
 ```
 conf t
  interface f0/0
@@ -171,12 +171,12 @@ conf t
 end
 ```
 
-### 🖥️ PC 설정 (VPCS 기준)
+### PC 설정 (VPCS 기준)
 ```
 PC1> ip <PC1_IP> <PC_MASK> <GW_VIP>
 PC2> ip <PC2_IP> <PC_MASK> <GW_VIP>
 ```
-#### 9️⃣ 변경 후 검증
+#### 변경 후 검증
 ```
 R2# show standby brief
 R3# show standby brief
@@ -189,7 +189,7 @@ PC1> ping <R1_TO_R2_IP>
 ```
 
 
-### ✅ 1️⃣ VLAN 인터페이스 기반 HSRP (SVI)
+### 1. VLAN 인터페이스 기반 HSRP (SVI)
 
 환경 예시
 
@@ -226,7 +226,7 @@ interface vlan 10
  no shutdown
 end
 ```
-### ✅ 2️⃣ Physical Port 기반 HSRP (라우터 직결 환경)
+### 2. Physical Port 기반 HSRP (라우터 직결 환경)
 
 환경 예시
 
@@ -235,7 +235,7 @@ end
 가상 게이트웨이: 10.0.0.1
 
 ```
-🔹 R1
+R1
 conf t
 interface GigabitEthernet0/0
  ip address 10.0.0.2 255.255.255.0
@@ -249,7 +249,7 @@ interface GigabitEthernet0/0
 end
 ```
 
-🔹 R2
+ R2
 ```
 conf t
 interface GigabitEthernet0/0
@@ -263,7 +263,7 @@ interface GigabitEthernet0/0
 end
 ```
 
-### 🔍 상태 확인 명령어 (시험 + 실무 필수)
+### << 상태 확인 명령어 >> (시험 + 실무 필수)
 ```
 show standby brief
 show standby
@@ -275,7 +275,7 @@ Vlan10 - Group 10
   Virtual IP address is 192.168.10.1
   Priority 110 (configured 110)
 ```
-### ⚠️ 실무 꿀팁
+### 실무 꿀팁
 
 ✔ Priority 같으면 IP 높은 쪽이 Active
 
@@ -441,5 +441,4 @@ R2(config-if)#vrrp 10 authentication AWS
 R2(config-if)#vrrp 10 authentication md5 key-string AWS
 ```
 
-# 3. GLBP(Gateway Load Balancing Protocol)    <CISCO Protocol>
 
