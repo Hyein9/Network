@@ -1,389 +1,351 @@
-▶︎ Disabled : 포트가 고장나서 사용할 수 없거나 네트워크 관리자가 포트를 일부러 Shut down 시켜놓은 상태
-∙ 데이터 전송 불가능
-∙ 맥 어드레스 러닝 불가능
-∙ BPDU 송수신 불가능
+# STP (Spanning Tree Protocol) 및 BPDU 실습
 
+## 개념 정리
 
-▶︎ Blocking : 스위치를 맨 처음 켜거나 Disabled 되어 있는 포트를 관리자가 다시 살린 상태.
-              이 상태에서는 데이터 전송은 불가능하고 오직 BPDU만 송수신이 가능하다. 스패닝 트리의 3가지 선정 과정이 이 블로킹 단계에서 이뤄진다.
-∙ 데이터 전송 불가능
-∙ 맥 어드레스 러닝 불가능
-∙ BPDU 송수신
-- 0초 or 20초
+### STP란
+- 스위치나 브리지 환경에서 루핑(Looping)을 방지하는 프로토콜
+- 스위치를 이중화 구성하면 물리적으로 루프가 발생할 수 있는데, STP가 특정 포트를 논리적으로 차단하여 루프를 막음
+- IEEE 802.1D 표준으로 정의
 
-
-▶︎ Listening : 블로킹 상태에 있던 스위치 포트가 루트포트나 데지그네이티드 포트로 선정되면 포트는 바로 리스닝 상태로 넘어간다.
-               리스닝 상태에 있던 포트도 상황에 따라 다시 Non Designated 포트로 변할 수 있고 그러면 다시 블로킹 상태로 돌아간다.
-∙ 데이터 전송 불가능
-∙ 맥 어드레스 러닝 불가능
-∙ BPDU 송수신
-
-
-▶︎ Learning : 리스닝 상태에 있던 스위치 포트가 포워딩 딜레이 디폴트 시간인 15초 동안 계속 그 상태를 유지하면 리스닝 상태는 러닝 상태로 넘어간다.
-             이 상태에서야 비로소 맥 어드레스를 배워 맥 어드레스 테이블을 만들기 시작할 수 있다.
-∙ 데이터 전송 불가능
-∙ 맥 어드레스 러닝
-∙ BPDU 송수신
-
-
-▶︎ Forwarding : 스위치 포트가 러닝 상태에서 다른 상태로 넘어가지 않고 다시 포워딩 딜레이 디폴트 시간인 15초동안 유지하면 러닝 상태에서 포워딩 상태로 넘어가게 된다.
-               포워딩 상태가 되어야 스위치 포트는 드디어 데이터 프레임을 주고받을 수 있게 된다.
-∙ 데이터 전송
-∙ 맥 어드레스 러닝
-∙ BPDU 송수신
-
-Disabled -> Blocking(20초) -> Listening(15초) -> Learning (15초) -> Forwarding
-
-
-
-## 스패닝트리 프로토콜 종류
-#### 1. CST (Common Spanning Tree)
-- 물리적인 네트워크 연결을 기반으로 하나의 Port를 Block 시켜 루프를 방지
- 
-#### 2. PVST (Per Vlan Spanning Tree)
-- 기존 STP의 확장판으로 VLAN 별로 하나의 Port를 Block 시킴.
-- 시스코 전용 프로토콜의 프로토콜로 CST와 호환되지않음.
-
-#### 3. PVST+
-- PVST의 확장판
-- 802.1q 트렁크 방식 지원
-- 시스코 전용, CST와 호환
-
-
-#### 4. RSTP
-- STP의 진화형으로 빠른 수렴 속도를 가짐
-
-
-#### 5. PVRST
-- 시스코에서 만든 RSTP의 확장판
-
-
-#### 6. MSTP (Multiple Spanning Tree Protocol)
-- 여러개의 VLAN을 그룹으로 묶어 STP를 동작시킴
-- VLAN의 개수가 많을수록 비례하여 일반적인 PVST는 BPDU를 전송하기 때문에 트래픽의 부하가 발생.
-  MSTP는 VLAN을 그룹으로 묶어 BPDU를 보내기 때문에 트래픽의 부하가 적음!
-
-### STP 스패닝 트리 프로토콜
-- 스위치나 브리지에서 루핑을 막아주는 프로토콜
-- 스위치나 브리지 구성에서 출발지로부터 목적지까지의 
+### 루프가 발생하면
 ```
-SW1#sh spanning-tree 
+  [SW1] -------> [SW2]
+    |               |
+    +---- 루프 -----+
+         발생!
+```
+- 브로드캐스트 프레임이 무한 순환하여 네트워크 마비
+- MAC 주소 테이블이 불안정해짐 (MAC flapping)
+- CPU 과부하로 스위치 다운 가능
+
+### BPDU (Bridge Protocol Data Unit)
+- 스위치끼리 STP 정보를 교환하기 위해 주고받는 프레임
+- Root Bridge ID, Path Cost, Bridge ID, Port ID 등의 정보를 포함
+- Root Bridge는 매 2초(Hello Time)마다 BPDU를 전송하고, 나머지 스위치는 이를 수신
+
+### Bridge ID 구조
+
+```
++------------------+---------------------+
+|    Priority      |    MAC Address      |
+|   (16bit)        |    (48bit)          |
++------------------+---------------------+
+     |
+     +-- 기본값: 32768
+         4096의 배수로 변경 가능
+         sys-id-ext (VLAN 번호) 포함
+```
+
+Bridge ID = Priority + MAC Address. Priority가 낮을수록 우선순위가 높다.
+
+---
+
+## STP 포트 상태 (Port States)
+
+STP는 포트 상태를 5단계로 관리하며, 루프 방지를 위해 단계적으로 전환한다.
+
+### 상태 전이 흐름
+
+```
+Disabled ---> Blocking ---> Listening ---> Learning ---> Forwarding
+               (20초)        (15초)        (15초)
+                               |              |
+                               v              v
+                           상황 변경 시 Blocking으로 복귀 가능
+```
+
+### 각 상태 상세
+
+| 상태 | 데이터 전송 | MAC 학습 | BPDU 송수신 | 시간 | 설명 |
+|------|:---------:|:-------:|:----------:|------|------|
+| Disabled | X | X | X | - | 포트 고장 또는 관리자가 shutdown 시킨 상태 |
+| Blocking | X | X | 수신만 | 20초 | 스위치 최초 부팅 시 상태. STP 선정 과정이 이 단계에서 진행됨 |
+| Listening | X | X | O | 15초 | Root Port나 Designated Port로 선정된 포트가 진입. 상황 변경 시 Blocking으로 복귀 가능 |
+| Learning | X | O | O | 15초 | MAC 주소 테이블을 만들기 시작하는 단계. 아직 데이터 전송은 불가 |
+| Forwarding | O | O | O | - | 실제 데이터 프레임을 주고받을 수 있는 최종 상태 |
+
+Blocking(20초) + Listening(15초) + Learning(15초) = 총 약 50초가 소요된다. 이 시간 동안 해당 포트로 데이터 전송이 불가.
+
+---
+
+## STP 포트 역할 (Port Roles)
+
+### Root Port (RP)
+- Root Bridge로 가는 최단 경로 포트
+- 각 일반 스위치마다 1개만 존재
+- Forwarding 상태
+
+선정 기준 (우선순위 순):
+1. Root까지 Path Cost가 가장 낮음
+2. 상대 Bridge ID가 가장 낮음
+3. 상대 Port ID가 가장 낮음
+
+### Designated Port (DP)
+- 해당 네트워크 세그먼트의 대표 포트
+- 각 링크(세그먼트)마다 1개 존재
+- 해당 구간에서 Root까지 비용이 가장 낮은 스위치의 포트
+- Forwarding 상태
+
+### Blocked Port (Non-Designated Port)
+- Root Port도 Designated Port도 아닌 포트
+- 루프 방지를 위해 차단된 상태
+- BPDU는 수신하지만 데이터는 전달하지 않음
+
+### 포트 역할 예시
+
+```
+          [ Root Bridge ]
+          (모든 포트 = DP)
+            |         |
+          (DP)      (DP)
+            |         |
+         [SW1]------[SW2]
+          (RP)      (RP)
+            \        /
+           (DP)  (Blocked)
+              \  /
+             [SW3]
+             (RP)
+```
+
+- Root Bridge: 모든 포트가 Designated Port
+- SW1, SW2: Root 방향 포트가 Root Port
+- SW3: Root로 가는 최적 경로가 Root Port, 반대편은 Blocked
+
+---
+
+## STP 선정 과정
+
+### 1단계. Root Bridge 선출
+- 모든 스위치가 BPDU를 교환하여 Bridge ID가 가장 낮은 스위치를 Root Bridge로 선출
+- Bridge ID = Priority(기본 32768) + MAC Address
+- Priority가 같으면 MAC Address가 낮은 쪽이 Root Bridge
+
+### 2단계. Root Port 선정
+- Root Bridge가 아닌 모든 스위치에서 Root Bridge까지 Cost가 가장 낮은 포트를 Root Port로 선정
+
+### 3단계. Designated Port 선정
+- 각 세그먼트에서 Root Bridge까지 Cost가 가장 낮은 스위치의 포트가 Designated Port
+- Root Bridge의 모든 포트는 Designated Port
+
+### Path Cost 기준
+
+| 대역폭 | Cost |
+|--------|------|
+| 10 Gbps | 2 |
+| 1 Gbps | 4 |
+| 100 Mbps | 19 |
+| 10 Mbps | 100 |
+
+---
+
+## STP 프로토콜 종류
+
+| 프로토콜 | 표준 | 특징 |
+|---------|------|------|
+| CST (Common Spanning Tree) | 802.1D | 물리적 연결 기반으로 하나의 포트를 Block. 전체 네트워크에 STP 인스턴스 1개 |
+| PVST (Per VLAN Spanning Tree) | Cisco 전용 | VLAN별로 STP 인스턴스를 운영. CST와 호환 안 됨 |
+| PVST+ | Cisco 전용 | PVST의 확장판. 802.1Q 트렁크 지원. CST와 호환 가능 |
+| RSTP (Rapid STP) | 802.1w | STP의 개선 버전. 수렴 속도가 수 밀리초~수 초로 빠름 |
+| PVRST (Per VLAN Rapid STP) | Cisco 전용 | RSTP + VLAN별 인스턴스 |
+| MSTP (Multiple STP) | 802.1s | 여러 VLAN을 그룹으로 묶어 STP 운영. BPDU 부하 감소 |
+
+---
+
+## STP vs RSTP 비교
+
+| 구분 | STP (802.1D) | RSTP (802.1w) |
+|------|-------------|---------------|
+| 수렴 속도 | 30~50초 | 수 밀리초 ~ 수 초 |
+| 포트 상태 | 5단계 (Disabled/Blocking/Listening/Learning/Forwarding) | 3단계 (Discarding/Learning/Forwarding) |
+| 백업 포트 | Blocked Port (구분 없음) | Alternate Port / Backup Port (명시적) |
+| 링크 업 시 | 타이머 대기 | 즉시 협상 |
+| 토폴로지 변경 | 느린 반응 | 빠른 핸드셰이크 |
+
+### RSTP 포트 역할
+
+| 포트 | 역할 | 평소 상태 | 설명 |
+|------|------|----------|------|
+| Root Port (RP) | Root로 가는 최단 경로 | Forwarding | 주력 출구 |
+| Designated Port (DP) | 세그먼트 대표 | Forwarding | 해당 구간 통신 담당 |
+| Alternate Port (AP) | RP의 백업 | Discarding | RP 장애 시 즉시 Forwarding 승격 |
+| Backup Port (BP) | 같은 스위치 이중 연결 시 예비 | Discarding | 드문 케이스 |
+
+### RSTP 포트 역할 예시
+
+```
+        [ Root Bridge ]
+             |
+           (DP)
+             |
+          [SW1]
+          /    \
+       (RP)   (AP)  ← RP 장애 시 즉시 승격
+        |      |
+      [SW2]--[SW3]
+           (DP)
+```
+
+- Alternate Port는 평소 Discarding 상태지만 BPDU는 계속 수신
+- Root Port가 다운되면 대기 없이 바로 Forwarding으로 전환
+- STP에서는 이 과정에 30~50초 걸리지만 RSTP에서는 거의 즉시 처리됨
+
+---
+
+## 실습: Root Bridge 선출 및 변경
+
+### 토폴로지
+
+```
+        +-------+
+        |  SW2  |
+        +---+---+
+       f0/1 | f0/2
+            |
+     f0/2   |   f0/2
+  +----+----+----+----+
+  |   SW1   |   SW3   |
+  +----+----+----+----+
+     f0/1        f0/1
+       \          /
+        \        /
+     f0/1  f0/2
+      +---+---+
+      | Switch|
+      +-------+
+```
+
+### 스위치별 MAC Address 및 Bridge ID
+
+| 스위치 | MAC Address | 기본 Priority | Bridge ID |
+|--------|------------|--------------|-----------|
+| SW1 | 0004.9A76.8182 | 32769 | 32769 + MAC |
+| SW2 | 0090.21D3.D807 | 32769 | 32769 + MAC |
+| SW3 | 0004.9A66.7111 | 32769 | 32769 + MAC |
+
+Priority가 동일하므로 MAC Address가 가장 낮은 SW3(0004.9A66.7111)이 Root Bridge로 선출.
+
+---
+
+### 1단계. 현재 STP 상태 확인
+
+```
+show spanning-tree
+```
+
+출력 예시 (SW1):
+```
 VLAN0001
   Spanning tree enabled protocol ieee
   Root ID    Priority    32769
              Address     0004.9A66.7111
              Cost        19
              Port        2(FastEthernet0/2)
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
 
-  Bridge ID  Priority    32769  (priority 32768 sys-id-ext 1)  *Priority value is changeable*
+  Bridge ID  Priority    32769
              Address     0004.9A76.8182
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-             Aging Time  20
-
-Interface        Role Sts Cost      Prio.Nbr Type
----------------- ---- --- --------- -------- --------------------------------
-Fa0/1            Desg FWD 19        128.1    P2p
-Fa0/2            Root FWD 19        128.2    P2p
 ```
 
+- Root ID: Root Bridge의 정보 (SW3의 MAC이 표시됨)
+- Bridge ID: 자기 자신의 정보
+- Root Port: f0/2 (Root Bridge 방향)
+
+### 2단계. Root Bridge 수동 변경
+
+`spanning-tree vlan 1 root primary` 명령을 사용하면 현재 Root Bridge보다 Priority를 낮게 자동 조정한다. Priority는 4096의 배수 단위로 변경됨.
+
+**SW2에서 실행:**
 ```
-SW1#sh version
-Cisco Internetwork Operating System Software
-IOS (tm) C2950 Software (C2950-I6Q4L2-M), Version 12.1(22)EA4, RELEASE SOFTWARE(fc1)
-Copyright (c) 1986-2005 by cisco Systems, Inc.
-Compiled Wed 18-May-05 22:31 by jharirba
-Image text-base: 0x80010000, data-base: 0x80562000
-
-ROM: Bootstrap program is is C2950 boot loader
-Switch uptime is 14 minutes, 7 seconds
-System returned to ROM by power-on
-
-Cisco WS-C2950-24 (RC32300) processor (revision C0) with 21039K bytes of memory.
-Processor board ID FHK0610Z0WC
-Last reset from system-reset
-Running Standard Image
-24 FastEthernet/IEEE 802.3 interface(s)
-
-63488K bytes of flash-simulated non-volatile configuration memory.
-Base ethernet MAC Address: 0004.9A76.8182
-Motherboard assembly number: 73-5781-09 
-Power supply part number: 34-0965-01
-Motherboard serial number: FOC061004SZ
-Power supply serial number: DAB0609127D
-Model revision number: C0
-Motherboard revision number: A0
-Model number: WS-C2950-24
-System serial number: FHK0610Z0WC
-Configuration register is 0xF
+conf t
+spanning-tree vlan 1 root primary
+end
+show spanning-tree
 ```
 
-Root bridge 선출
-- 상대방과 bridge id 비교해서 낮은 값을 root bridge 선출
-- 스위치들은 root id가 root bridge의 id값으로 변경
-- root bridge가 선출되면 다른 스위치들은 매 2초마다 bpdu 수신
+결과:
 ```
-Switch(config)#spanning-tree vlan 1 root primary 
-
-Switch#sh spanning-tree 
-VLAN0001
-  Spanning tree enabled protocol ieee
-  Root ID    Priority    24577 변경됨
-             Address     0090.21D3.D807
-             This bridge is the root
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-
-  Bridge ID  Priority    24577  (priority 24576 sys-id-ext 1)
-             Address     0090.21D3.D807
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-             Aging Time  20
-
-Interface        Role Sts Cost      Prio.Nbr Type
----------------- ---- --- --------- -------- --------------------------------
-Fa0/1            Desg FWD 19        128.1    P2p
-Fa0/2            Desg LRN 19        128.2    P2p
-```
-- 블락포트가 3번스위치로 밀려남 -
-```
-SW3(config)#do sh spa
-VLAN0001
-  Spanning tree enabled protocol ieee
-  Root ID    Priority    20481
-             Address     0004.9A66.7111
-             This bridge is the root
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-
-  Bridge ID  Priority    20481  (priority 20480 sys-id-ext 1)
-             Address     0004.9A66.7111
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-             Aging Time  20
-
-Interface        Role Sts Cost      Prio.Nbr Type
----------------- ---- --- --------- -------- --------------------------------
-Fa0/2            Desg LSN 19        128.2    P2p
-Fa0/1            Desg FWD 19        128.1    P2p
-```
-```
-SW1(config)#spanning-tree vlan 1 root primary 
-SW1(config)#do sh spa
-VLAN0001
-  Spanning tree enabled protocol ieee
-  Root ID    Priority    16385
-             Address     0004.9A76.8182
-             This bridge is the root
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-
-  Bridge ID  Priority    16385  (priority 16384 sys-id-ext 1)
-             Address     0004.9A76.8182
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-             Aging Time  20
-
-Interface        Role Sts Cost      Prio.Nbr Type
----------------- ---- --- --------- -------- --------------------------------
-Fa0/1            Desg LSN 19        128.1    P2p
-Fa0/2            Desg FWD 19        128.2    P2p
-```
-```
-Switch(config)#spanning-tree vlan 1 root primary 
-Switch(config)#do sh spa
-VLAN0001
-  Spanning tree enabled protocol ieee
-  Root ID    Priority    12289
-             Address     0090.21D3.D807
-             This bridge is the root
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-
-  Bridge ID  Priority    12289  (priority 12288 sys-id-ext 1)
-             Address     0090.21D3.D807
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-             Aging Time  20
-
-Interface        Role Sts Cost      Prio.Nbr Type
----------------- ---- --- --------- -------- --------------------------------
-Fa0/1            Desg FWD 19        128.1    P2p
-Fa0/2            Desg LSN 19        128.2    P2p
-```
-```
-SW3(config)#do sh spa
-VLAN0001
-  Spanning tree enabled protocol ieee
-  Root ID    Priority    8193
-             Address     0004.9A66.7111
-             This bridge is the root
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-
-  Bridge ID  Priority    8193  (priority 8192 sys-id-ext 1)
-             Address     0004.9A66.7111
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-             Aging Time  20
-
-Interface        Role Sts Cost      Prio.Nbr Type
----------------- ---- --- --------- -------- --------------------------------
-Fa0/2            Desg LSN 19        128.2    P2p
-Fa0/1            Desg FWD 19        128.1    P2p
-```
-```
-SW1(config)#do sh spa
-VLAN0001
-  Spanning tree enabled protocol ieee
-  Root ID    Priority    4097
-             Address     0004.9A76.8182
-             This bridge is the root
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-
-  Bridge ID  Priority    4097  (priority 4096 sys-id-ext 1)
-             Address     0004.9A76.8182
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-             Aging Time  20
-
-Interface        Role Sts Cost      Prio.Nbr Type
----------------- ---- --- --------- -------- --------------------------------
-Fa0/1            Desg LSN 19        128.1    P2p
-Fa0/2            Desg FWD 19        128.2    P2p
-```
-```
-Switch(config)#do sh spa
-VLAN0001
-  Spanning tree enabled protocol ieee
-  Root ID    Priority    1
-             Address     0090.21D3.D807
-             This bridge is the root
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-
-  Bridge ID  Priority    1  (priority 0 sys-id-ext 1)
-             Address     0090.21D3.D807
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-             Aging Time  20
-
-Interface        Role Sts Cost      Prio.Nbr Type
----------------- ---- --- --------- -------- --------------------------------
-Fa0/1            Desg FWD 19        128.1    P2p
-Fa0/2            Desg LSN 19        128.2    P2p
-```
-primary 값이 
-4096의 배수만큼 돌면서 관리자가 직접 static으로 지정가능하고
-가장 낮은 값으로 바뀔 것이고 가장 높은 값과 낮은값 사이 계산해서 작게 설정 이후에 0이 될때까지 사용가능하나 나머지가 동일하게 0이 되면 
-
-리셋 후 
-```
-Switch(config)#spanning-tree vlan 1 root secondary 
-Switch(config)#do sh spa
-VLAN0001
-  Spanning tree enabled protocol ieee
-  Root ID    Priority    28673
-             Address     0090.21D3.D807
-             This bridge is the root
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-
-  Bridge ID  Priority    28673  (priority 28672 sys-id-ext 1)
-             Address     0090.21D3.D807
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-             Aging Time  20
-
-Interface        Role Sts Cost      Prio.Nbr Type
----------------- ---- --- --------- -------- --------------------------------
-Fa0/1            Desg FWD 19        128.1    P2p
-Fa0/2            Desg FWD 19        128.2    P2p
+Root ID    Priority    24577    ← 기존 32769보다 낮아짐
+           Address     0090.21D3.D807
+           This bridge is the root   ← SW2가 Root Bridge가 됨
 ```
 
+### Root Primary 반복 시 Priority 변화
 
+`root primary`를 각 스위치에서 반복 실행하면, 현재 Root보다 항상 낮은 값으로 설정되기 때문에 Priority가 4096씩 줄어든다:
 
-## 🌳 STP / RSTP 포트 역할 3종 세트
-
-(기본 STP: IEEE 802.1D,
-빠른 버전: IEEE 802.1w (RSTP))
-
-✅ Root Port (RP)
-
-📍 Root Bridge로 가는 최단 경로 포트
-각 일반 스위치마다 1개만 존재
-Root Bridge 방향으로 트래픽 보내는 포트
-
-기준:
-1️⃣ Root까지 Path Cost 가장 낮음
-2️⃣ 상대 Bridge ID
-3️⃣ 상대 Port ID
-
-👉 쉽게 말해:
-“내가 루트한테 가는 베스트 길”
-
-✅ Designated Port (DP)
-
-🏆 해당 네트워크 구간(세그먼트)의 대표 포트
-
-각 링크(세그먼트)마다 1개씩 존재
-
-해당 세그먼트에서 Root까지 비용이 제일 낮은 스위치의 포트
-
-트래픽 전달 담당 포트 (Forwarding)
-
-👉 쉽게 말해:
-“이 구간에서 통신 담당자”
-
-🔁 Alternate Port (AP) – RSTP 전용
-🔄 Root Port의 백업 포트
-
-RSTP(802.1w) 에서만 등장
-
-평소엔 차단 상태 (Discarding)
-BDPU를 수신받는 포트이지만 실제 데이터는 주고받지 않음.
-BP가 선정되면 반대편은 DP가 됨
-Root Port가 죽으면 👉 즉시 Forwarding으로 승격 ⚡
-
-STP에서는 이게 그냥 Blocked Port로 뭉뚱그려짐
-
-👉 쉽게 말해:
-“루트로 가는 예비 경로”
-
-🧠 한 방에 이해하는 그림 느낌
 ```
-      [ Root Bridge ]
-           |
-         (DP)
-           |
-        [SW1]
-        /    \
-     (RP)   (AP)
-      |      |
-    [SW2]———[SW3]
-          (DP)
+실행 순서    스위치     Priority 변화
+1번째       SW2       32769 → 24577
+2번째       SW3       32769 → 20481
+3번째       SW1       32769 → 16385
+4번째       SW2       24577 → 12289
+5번째       SW3       20481 → 8193
+6번째       SW1       16385 → 4097
+7번째       SW2       12289 → 1       ← 최솟값 (Priority 0 + sys-id-ext 1)
 ```
 
-SW1 → Root로 가는 포트 = Root Port
+Priority가 0이 되면 더 이상 낮출 수 없다. 여러 스위치가 모두 0이 되면 MAC Address로 Root Bridge가 결정됨.
 
-Root Bridge 쪽 포트 = Designated Port
+### 3단계. Root Secondary 설정
 
-SW1에서 Root 말고 다른 경로 = Alternate Port (백업)
+Root Bridge가 다운될 때를 대비해서 백업 Root Bridge를 지정할 수 있다. Priority를 28672로 설정함.
 
-⚔️ 한 줄 요약 비교
-포트	정체성	평소 상태	핵심 역할
-Root Port	루트로 가는 베스트 길	Forwarding	“내 주력 출구”
-Designated Port	세그먼트 대표	Forwarding	“이 구간 통신 담당”
-Alternate Port	백업 루트 경로	Discarding	“주력 죽으면 바로 투입”
+```
+conf t
+spanning-tree vlan 1 root secondary
+end
+show spanning-tree
+```
 
-💡 실무 감각 팁
-RSTP 쓰는 환경이면 Alternate Port = 장애 대응 속도 핵심
-STP만 쓰면 장애 나면 30초~50초 멈춤 → 체감 개빡셈
-그래서 요즘은 거의 다 RSTP or PVST+ 씀
+결과:
+```
+Bridge ID  Priority    28673  (priority 28672 sys-id-ext 1)
+```
 
-2️⃣ RSTP 포트 역할 (Roles)
+현재 Root Bridge(Priority가 더 낮은 스위치)가 정상이면 Secondary는 Root가 되지 않지만, Root Bridge가 다운되면 Secondary가 Root Bridge를 대신한다.
 
-RSTP는 포트 “역할”을 명확히 정의함:
-Root Port (RP)
-→ 루트 브리지로 가는 최단 경로
-Designated Port (DP)
-→ 해당 세그먼트의 대표 포트 (Forwarding)
-Alternate Port (AP)
-→ RP의 백업 경로 (평소 Discarding)
-Backup Port (BP)
-→ 같은 스위치 내 이중 연결 시 생기는 예비 포트 (드문 케이스)
+---
 
-👉 핵심: Alternate/Backup 포트가 이미 준비 중이라 장애 시 바로 승격 가능
+## STP 타이머
 
-1️⃣ STP vs RSTP 핵심 차이
-구분	      STP (802.1D)	    RSTP (802.1w)
-수렴 속도  	30~50초	          수 ms ~ 수 초
-포트 상태  	5단계	            3단계
-백업 포트  	Blocked (개념만)	  Alternate / Backup (명시)
-링크 업 시  	타이머 기다림	    즉시 협상
-토폴로지 변경 반응	느림    	  빠른 핸드셰이크
+| 타이머 | 기본값 | 설명 |
+|--------|--------|------|
+| Hello Time | 2초 | BPDU 전송 주기 |
+| Max Age | 20초 | BPDU를 수신하지 못하면 토폴로지 변경으로 판단하는 시간 |
+| Forward Delay | 15초 | Listening → Learning, Learning → Forwarding 각 단계의 대기 시간 |
+
+---
+
+## 확인 명령어 정리
+
+| 명령어 | 용도 |
+|--------|------|
+| `show spanning-tree` | STP 전체 상태 (Root ID, Bridge ID, 포트 역할/상태) |
+| `show spanning-tree vlan [번호]` | 특정 VLAN의 STP 상태 |
+| `show spanning-tree summary` | STP 요약 정보 |
+| `show version` | 스위치 모델, IOS 버전, MAC Address 확인 |
+
+---
+
+## 설정 명령어 정리
+
+```
+-- Root Bridge로 지정 (Primary)
+spanning-tree vlan [VLAN번호] root primary
+
+-- 백업 Root Bridge로 지정 (Secondary)
+spanning-tree vlan [VLAN번호] root secondary
+
+-- Priority 직접 지정 (4096의 배수)
+spanning-tree vlan [VLAN번호] priority [값]
+```
+
+---
+
+## 정리
+
+- STP는 스위치 이중화 환경에서 루프를 방지하기 위해 특정 포트를 차단하는 프로토콜
+- BPDU를 통해 Bridge ID를 교환하고, 가장 낮은 Bridge ID를 가진 스위치가 Root Bridge로 선출됨
+- Root Port는 Root Bridge로 가는 최적 경로, Designated Port는 세그먼트 대표, 나머지는 Blocked
+- STP는 수렴에 30~50초가 걸리는 반면, RSTP는 Alternate Port를 활용해 거의 즉시 복구 가능
+- 실무에서는 RSTP 또는 PVST+를 주로 사용하며, `root primary`로 Root Bridge를 의도적으로 지정하는 것이 일반적
