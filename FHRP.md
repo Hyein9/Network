@@ -1,4 +1,4 @@
-# FHRP(First Hop Redundancy Protoocols)
+# FHRP(First Hop Redundancy Protocols)
 ## 1. HSRP(Hot Standby Router Protocol)  <CISCO Protocol>
   (1) 이중게이트웨이 사이에서 IP와 MAC Address를 공유 -> 무정지 경로 이중화를 제공.
   
