@@ -1,0 +1,62 @@
+# 1. Access-list 접근제어목록
+- 네트워크 장비에서 원하지않는 traffic이 존재할때 이러한 traffic이 네트워크를 경유하거나 접근할 수 있는 것을 차단할 필요성 있을 때 필터링 기법을 이용하여 차단
+
+routing table update 시 routing table의 어느부분을 전달하지않게 하고자할때
+라우터 및 layer3를 경유하는 모든 packet을 제어 또는 적용 가능
+acl 적용해서 
+
+standarad access-list
+- ip 필터링
+- ip packet의 source address 만 검사해서 제어
+
+
+1️⃣ ACL 한 줄의 구조
+``` [번호] [permit | deny] [조건] ```
+
+라우터에서는 이렇게 씀:
+``` access-list <번호> <permit|deny> <조건> ```
+
+2️⃣ Standard ACL 문법 (간단형)
+📌 기본형
+``` access-list 1 permit 192.168.10.0 0.0.0.255 ```
+
+🔍 하나씩 뜯어보면
+부분	의미
+access-list	ACL 생성 명령
+1	Standard ACL 번호 (1–99)
+permit	허용
+192.168.10.0	출발지 IP
+0.0.0.255	wildcard mask
+
+👉 출발지가 192.168.10.0/24면 허용
+
+📌 host / any 축약형
+```
+access-list 1 deny host 192.168.10.10
+access-list 1 permit any
+```
+
+표현	의미
+host 192.168.10.10	정확히 이 IP
+any	모든 IP (0.0.0.0 255.255.255.255)
+
+보통 목적지와 가까운곳에 라우팅 ㄱ
+데비안에는 ping접속 불가 원인: 목적지 방향에 따라 정해짐
+
+시나리오 1
+출발지 IP 192.168.10.0/24
+목적지 SERVER-A WEB Service만 접근 허가
+그 외 트래픽 접근 차단
+
+시나리오 2
+출발지 IP 192.168.10.0/24
+목적지 Server-A & Server -B WEB Service만 접근 허가
+그 외 트래픽 접근 차단
+```
+R2(config)#$ access-list 100 permit tcp 192.168.10.0 0.0.0.255 host 172.16.10.100 eq 80
+R2(config)#$ access-list 100 permit tcp 192.168.10.0 0.0.0.255 host 172.16.10.200 eq 80
+R2(config)#access-list 100 deny ip any any
+R2(config)#int f0/0
+```
+R2(config-if)#ip access-group 100 out
+R2(config-if)#end
