@@ -1,62 +1,182 @@
-# 1. Access-list 접근제어목록
-- 네트워크 장비에서 원하지않는 traffic이 존재할때 이러한 traffic이 네트워크를 경유하거나 접근할 수 있는 것을 차단할 필요성 있을 때 필터링 기법을 이용하여 차단
+# Access Control List (ACL) 실습
 
-routing table update 시 routing table의 어느부분을 전달하지않게 하고자할때
-라우터 및 layer3를 경유하는 모든 packet을 제어 또는 적용 가능
-acl 적용해서 
+## 개념 정리
 
-standarad access-list
-- ip 필터링
-- ip packet의 source address 만 검사해서 제어
+### ACL이란
+- 네트워크 장비에서 원하지 않는 트래픽을 필터링하여 차단하는 접근 제어 목록
+- 라우터 및 Layer 3 장비를 경유하는 모든 패킷에 대해 허용(permit) 또는 차단(deny)을 적용할 수 있음
+- 라우팅 테이블 업데이트 시 특정 경로 정보를 전달하지 않도록 제어할 때도 사용
 
+### ACL 동작 원리
+- ACL은 위에서 아래로 순서대로 검사하며, 조건에 일치하는 항목이 나오면 해당 동작을 수행하고 나머지는 검사하지 않음
+- 모든 ACL의 마지막에는 암묵적으로 `deny any`가 존재함 (명시하지 않아도 자동 적용)
+- 따라서 허용할 트래픽이 있다면 반드시 permit 구문을 먼저 작성해야 함
 
-1️⃣ ACL 한 줄의 구조
-``` [번호] [permit | deny] [조건] ```
+### ACL 종류
 
-라우터에서는 이렇게 씀:
-``` access-list <번호> <permit|deny> <조건> ```
+| 구분 | 번호 범위 | 검사 항목 | 적용 위치 권장 |
+|------|----------|----------|--------------|
+| Standard ACL | 1 ~ 99 | 출발지 IP만 검사 | 목적지에 가까운 곳 |
+| Extended ACL | 100 ~ 199 | 출발지 IP, 목적지 IP, 프로토콜, 포트 번호 | 출발지에 가까운 곳 |
 
-2️⃣ Standard ACL 문법 (간단형)
-📌 기본형
-``` access-list 1 permit 192.168.10.0 0.0.0.255 ```
+Standard ACL은 출발지 IP만 보기 때문에, 출발지 근처에 적용하면 의도하지 않은 트래픽까지 차단될 수 있다. 그래서 목적지에 가까운 인터페이스에 적용하는 것이 일반적이다.
 
-🔍 하나씩 뜯어보면
-부분	의미
-access-list	ACL 생성 명령
-1	Standard ACL 번호 (1–99)
-permit	허용
-192.168.10.0	출발지 IP
-0.0.0.255	wildcard mask
+Extended ACL은 세밀한 조건을 지정할 수 있으므로 출발지에 가까운 곳에 적용해서 불필요한 트래픽을 빨리 걸러내는 것이 효율적이다.
 
-👉 출발지가 192.168.10.0/24면 허용
+### ACL 적용 방향
 
-📌 host / any 축약형
+| 방향 | 의미 |
+|------|------|
+| in | 인터페이스로 들어오는 패킷에 적용 |
+| out | 인터페이스에서 나가는 패킷에 적용 |
+
+하나의 인터페이스에 in/out 각각 하나씩, 총 2개의 ACL을 적용할 수 있다.
+
+### Wildcard Mask
+- 서브넷 마스크와 반대 개념으로, 0은 일치해야 하는 비트, 1은 무시하는 비트를 의미
+- 예: 서브넷 마스크 255.255.255.0 → 와일드카드 마스크 0.0.0.255
+
+| 와일드카드 마스크 | 의미 |
+|-----------------|------|
+| 0.0.0.0 | 정확히 해당 IP 1개 (host와 동일) |
+| 0.0.0.255 | /24 대역 전체 |
+| 0.0.255.255 | /16 대역 전체 |
+| 255.255.255.255 | 모든 IP (any와 동일) |
+
+---
+
+## Standard ACL 문법
+
+### 기본 구조
+```
+access-list [번호] [permit|deny] [출발지 IP] [와일드카드 마스크]
+```
+
+### 예시
+```
+access-list 1 permit 192.168.10.0 0.0.0.255
+```
+- access-list: ACL 생성 명령
+- 1: Standard ACL 번호 (1~99)
+- permit: 허용
+- 192.168.10.0: 출발지 IP
+- 0.0.0.255: 와일드카드 마스크
+
+출발지가 192.168.10.0/24 대역이면 허용한다는 의미.
+
+### 축약 표현
+
 ```
 access-list 1 deny host 192.168.10.10
 access-list 1 permit any
 ```
 
-표현	의미
-host 192.168.10.10	정확히 이 IP
-any	모든 IP (0.0.0.0 255.255.255.255)
+| 표현 | 의미 |
+|------|------|
+| host 192.168.10.10 | 정확히 해당 IP 1개 (0.0.0.0과 동일) |
+| any | 모든 IP (255.255.255.255와 동일) |
 
-보통 목적지와 가까운곳에 라우팅 ㄱ
-데비안에는 ping접속 불가 원인: 목적지 방향에 따라 정해짐
-
-시나리오 1
-출발지 IP 192.168.10.0/24
-목적지 SERVER-A WEB Service만 접근 허가
-그 외 트래픽 접근 차단
-
-시나리오 2
-출발지 IP 192.168.10.0/24
-목적지 Server-A & Server -B WEB Service만 접근 허가
-그 외 트래픽 접근 차단
+### 인터페이스에 적용
 ```
-R2(config)#$ access-list 100 permit tcp 192.168.10.0 0.0.0.255 host 172.16.10.100 eq 80
-R2(config)#$ access-list 100 permit tcp 192.168.10.0 0.0.0.255 host 172.16.10.200 eq 80
-R2(config)#access-list 100 deny ip any any
-R2(config)#int f0/0
+interface [인터페이스]
+ ip access-group [ACL 번호] [in|out]
 ```
-R2(config-if)#ip access-group 100 out
-R2(config-if)#end
+
+---
+
+## Extended ACL 문법
+
+### 기본 구조
+```
+access-list [번호] [permit|deny] [프로토콜] [출발지 IP] [와일드카드] [목적지 IP] [와일드카드] [eq 포트번호]
+```
+
+### 주요 프로토콜 및 포트 번호
+
+| 프로토콜 | 포트 | 서비스 |
+|---------|------|--------|
+| tcp | 80 | HTTP (웹) |
+| tcp | 443 | HTTPS |
+| tcp | 23 | Telnet |
+| tcp | 21 | FTP |
+| icmp | - | Ping |
+| ip | - | 모든 IP 트래픽 |
+
+---
+
+## 실습 1: Extended ACL - 단일 서버 웹 접근 허용
+
+### 시나리오
+- 출발지: 192.168.10.0/24
+- 목적지: SERVER-A (172.16.10.100)의 웹 서비스(포트 80)만 접근 허용
+- 그 외 트래픽은 전부 차단
+
+### 설정
+
+```
+conf t
+access-list 100 permit tcp 192.168.10.0 0.0.0.255 host 172.16.10.100 eq 80
+access-list 100 deny ip any any
+
+interface f0/0
+ ip access-group 100 out
+end
+```
+
+한 줄씩 설명:
+- `permit tcp ... eq 80`: 192.168.10.0/24에서 172.16.10.100으로 가는 TCP 80번(HTTP) 트래픽만 허용
+- `deny ip any any`: 나머지 모든 트래픽 차단 (사실 암묵적으로 존재하지만 명시적으로 작성하는 것이 관리상 좋음)
+- `ip access-group 100 out`: f0/0에서 나가는 방향에 ACL 100 적용
+
+---
+
+## 실습 2: Extended ACL - 복수 서버 웹 접근 허용
+
+### 시나리오
+- 출발지: 192.168.10.0/24
+- 목적지: SERVER-A (172.16.10.100)와 SERVER-B (172.16.10.200)의 웹 서비스만 접근 허용
+- 그 외 트래픽은 전부 차단
+
+### 설정
+
+```
+conf t
+access-list 100 permit tcp 192.168.10.0 0.0.0.255 host 172.16.10.100 eq 80
+access-list 100 permit tcp 192.168.10.0 0.0.0.255 host 172.16.10.200 eq 80
+access-list 100 deny ip any any
+
+interface f0/0
+ ip access-group 100 out
+end
+```
+
+ACL은 위에서 아래로 순서대로 검사하기 때문에, permit 조건을 먼저 쓰고 마지막에 deny로 나머지를 막는 구조다.
+
+---
+
+## ACL 확인 명령어
+
+```
+show access-lists              -- 설정된 ACL 목록과 매칭 횟수 확인
+show ip interface [인터페이스]  -- 해당 인터페이스에 적용된 ACL 확인
+show running-config            -- 전체 설정에서 ACL 관련 부분 확인
+```
+
+---
+
+## ACL 삭제 방법
+
+```
+no access-list [번호]          -- 해당 번호의 ACL 전체 삭제
+```
+
+주의: Standard/Extended ACL은 번호 기반이라 개별 항목만 삭제할 수 없고, 전체를 지운 뒤 다시 작성해야 한다. 개별 항목 수정이 필요하면 Named ACL을 사용하는 것이 편리하다.
+
+---
+
+## 정리
+
+- Standard ACL은 출발지 IP만 검사하고, 목적지 가까이에 적용하는 것이 원칙
+- Extended ACL은 출발지, 목적지, 프로토콜, 포트까지 세밀하게 제어 가능하고, 출발지 가까이에 적용
+- ACL은 위에서 아래로 순서대로 매칭되며, 마지막에 암묵적 deny any가 존재
+- 허용할 트래픽을 먼저 permit으로 작성하고, 마지막에 deny로 나머지를 차단하는 것이 일반적인 구성 방식
